@@ -9,10 +9,7 @@ import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 
 
 // E (M, key1) || HMAC(M, key2)
@@ -20,6 +17,7 @@ import java.security.NoSuchAlgorithmException;
 
 
 public class SecureDatagramSocket extends DatagramSocket {
+    public static final int HEADER_SIZE = 5;
     byte[] keyBytes = new byte[]{
             0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
             0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
@@ -70,7 +68,7 @@ public class SecureDatagramSocket extends DatagramSocket {
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
-        hMac.update(datagramPacket.getData(), 0, datagramPacket.getLength());
+        hMac.update(cipherText, 0, ctLength);
 
 
 
@@ -117,11 +115,26 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
         DataInputStream dis = new DataInputStream(bais);
-        byte[] buff = new byte[4096];
 
         byte firstByte = dis.readByte();
         int payloadSize = dis.readInt();
 
+        byte[] messageHash = new byte[hMac.getMacLength()];
+        System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);
+
+        try {
+            hMac.init(hMacKey);
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        }
+
+
+        hMac.update(datagramPacket.getData(), HEADER_SIZE, payloadSize);
+
+
+        if (!MessageDigest.isEqual(hMac.doFinal(), messageHash)) {
+            System.out.println("Integrity check failed");
+        }
 
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
@@ -131,25 +144,17 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         byte[] plainText = new byte[0];
         try {
-            plainText = cipher.doFinal(datagramPacket.getData(), 5, payloadSize);
+            plainText = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
 //        int messageLength = plainText.length - hMac.getMacLength();
 
-        try {
-            hMac.init(hMacKey);
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        }
-        hMac.update(plainText, 0, payloadSize);
 
-        byte[] messageHash = new byte[hMac.getMacLength()];
-        System.arraycopy(datagramPacket.getData(), 5 + payloadSize, messageHash, 0, messageHash.length);
 
-        // TODO discard packet if corrupted?
 
-//                System.out.println("plain : "+ Utils.toHex(plainText, messageLength));
+
+//                System.out.println("plain : "+ Utils.toHex(plainText, payloadSize));
 //                System.out.println("Verified w/ message-integrity and message-authentication :" + MessageDigest.isEqual(hMac.doFinal(), messageHash));
 
 
