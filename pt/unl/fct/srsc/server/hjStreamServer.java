@@ -1,8 +1,12 @@
+package pt.unl.fct.srsc.server;
+
 /*
 * hjStreamServer.java 
 * Streaming server: streams video frames in UDP packets
 * for clients to play in real time the transmitted movies
 */
+
+import pt.unl.fct.srsc.common.SecureDatagramSocket;
 
 import java.io.*;
 import java.net.*;

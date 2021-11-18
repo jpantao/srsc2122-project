@@ -1,4 +1,4 @@
-
+package pt.unl.fct.srsc.proxy;
 
 /* hjUDPproxy, 20/Mar/18
  *
@@ -16,6 +16,8 @@
  *    Multicast IP address and port
  *       Both configurable in the file config.properties
  */
+
+import pt.unl.fct.srsc.common.SecureDatagramSocket;
 
 import java.io.FileInputStream;
 import java.io.InputStream;

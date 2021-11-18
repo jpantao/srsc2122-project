@@ -1,3 +1,4 @@
+package pt.unl.fct.srsc.common;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -5,6 +6,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
 
@@ -25,12 +27,16 @@ public class SecureDatagramSocket extends DatagramSocket {
         super();
     }
 
+    public SecureDatagramSocket(SocketAddress inSocketAddress) throws SocketException {
+        super(inSocketAddress);
+    }
+
 
     @Override
     public void send(DatagramPacket datagramPacket) throws IOException {
         SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
         IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-        Cipher          cipher = null;
+        Cipher cipher = null;
         Mac hMac = null;
 
         try {
@@ -44,7 +50,7 @@ public class SecureDatagramSocket extends DatagramSocket {
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-        Key hMacKey =new SecretKeySpec(key.getEncoded(), "HmacSHA512");
+        Key hMacKey = new SecretKeySpec(key.getEncoded(), "HmacSHA512");
 
 //        System.out.println("input : " + Utils.toHex(datagramPacket.getData(), datagramPacket.getLength()));
 
@@ -83,12 +89,15 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         datagramPacket.setData(cipherText, 0, ctLength);
         super.send(datagramPacket);
+    }
+
+
         @Override
-        public synchronized void receive(DatagramPacket datagramPacket) throws IOException {
+        public synchronized void receive (DatagramPacket datagramPacket) throws IOException {
             super.receive(datagramPacket);
             SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
             IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-            Cipher          cipher = null;
+            Cipher cipher = null;
             Mac hMac = null;
 
             try {
@@ -102,7 +111,7 @@ public class SecureDatagramSocket extends DatagramSocket {
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
             }
-            Key hMacKey =new SecretKeySpec(key.getEncoded(), "HmacSHA512");
+            Key hMacKey = new SecretKeySpec(key.getEncoded(), "HmacSHA512");
 
             try {
 
@@ -117,7 +126,7 @@ public class SecureDatagramSocket extends DatagramSocket {
             } catch (IllegalBlockSizeException | BadPaddingException e) {
                 e.printStackTrace();
             }
-            int    messageLength = plainText.length - hMac.getMacLength();
+            int messageLength = plainText.length - hMac.getMacLength();
 
             try {
                 hMac.init(hMacKey);
@@ -133,9 +142,6 @@ public class SecureDatagramSocket extends DatagramSocket {
 //        System.out.println("Verified w/ message-integrity and message-authentication :" + MessageDigest.isEqual(hMac.doFinal(), messageHash));
 
             datagramPacket.setData(plainText, 0, messageLength);
-
-        }
-
 
     }
 }

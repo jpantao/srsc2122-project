@@ -1,3 +1,4 @@
+package pt.unl.fct.srsc.common;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;

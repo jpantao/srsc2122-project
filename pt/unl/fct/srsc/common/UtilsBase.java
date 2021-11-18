@@ -1,3 +1,4 @@
+package pt.unl.fct.srsc.common;
 
 /**
  * Classe auxiliar
