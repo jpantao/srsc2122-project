@@ -3,15 +3,21 @@ package pt.unl.fct.srsc.common;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
+
+
+// E (M, key1) || HMAC(M, key2)
+
+
 
 public class SecureDatagramSocket extends DatagramSocket {
     byte[] keyBytes = new byte[]{
@@ -66,13 +72,25 @@ public class SecureDatagramSocket extends DatagramSocket {
         }
         hMac.update(datagramPacket.getData(), 0, datagramPacket.getLength());
 
-        try {
-            ctLength += cipher.doFinal(hMac.doFinal(), 0, hMac.getMacLength(), cipherText, ctLength);
-        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-            e.printStackTrace();
-        }
 
-        datagramPacket.setData(cipherText, 0, ctLength);
+
+//        try {
+//            ctLength += cipher.doFinal(hMac.doFinal(), 0, hMac.getMacLength(), cipherText, ctLength);
+//        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+//            e.printStackTrace();
+//        }
+
+
+
+        int sizeOfCt = ctLength;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        dos.writeByte(1);
+        dos.writeInt(sizeOfCt);
+        dos.write(cipherText, 0, ctLength);
+        dos.write(hMac.doFinal(), 0, hMac.getMacLength());
+        dos.flush();
+        datagramPacket.setData(baos.toByteArray(), 0, baos.size());
         super.send(datagramPacket);
     }
 
@@ -97,6 +115,14 @@ public class SecureDatagramSocket extends DatagramSocket {
         super.receive(datagramPacket);
         init();
 
+        ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
+        DataInputStream dis = new DataInputStream(bais);
+        byte[] buff = new byte[4096];
+
+        byte firstByte = dis.readByte();
+        int payloadSize = dis.readInt();
+
+
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -105,23 +131,29 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         byte[] plainText = new byte[0];
         try {
-            plainText = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength());
+            plainText = cipher.doFinal(datagramPacket.getData(), 5, payloadSize);
         } catch (IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
-        int messageLength = plainText.length - hMac.getMacLength();
+//        int messageLength = plainText.length - hMac.getMacLength();
 
         try {
             hMac.init(hMacKey);
         } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
-        hMac.update(plainText, 0, messageLength);
+        hMac.update(plainText, 0, payloadSize);
 
         byte[] messageHash = new byte[hMac.getMacLength()];
-        System.arraycopy(plainText, messageLength, messageHash, 0, messageHash.length);
+        System.arraycopy(datagramPacket.getData(), 5 + payloadSize, messageHash, 0, messageHash.length);
 
-        datagramPacket.setData(plainText, 0, messageLength);
+        // TODO discard packet if corrupted?
+
+//                System.out.println("plain : "+ Utils.toHex(plainText, messageLength));
+//                System.out.println("Verified w/ message-integrity and message-authentication :" + MessageDigest.isEqual(hMac.doFinal(), messageHash));
+
+
+        datagramPacket.setData(plainText, 0, payloadSize);
 
     }
 }
