@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 class hjUDPproxy {
     public static void main(String[] args) throws Exception {
-        InputStream inputStream = new FileInputStream("/home/hab12335/Documents/FCT/SRSC/PAI/src/hjUDPproxy/pt/unl/fct/srsc/pai/proxy/config.properties");
+        InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
         if (inputStream == null) {
             System.err.println("Configuration file not found!");
             System.exit(1);
