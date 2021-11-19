@@ -3,13 +3,14 @@ package pt.unl.fct.srsc.common;
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.rmi.CORBA.Util;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.nio.ByteBuffer;
 import java.security.*;
+import java.util.Properties;
 
 
 // E (M, key1) || HMAC(M, key2)
@@ -18,36 +19,73 @@ import java.security.*;
 
 public class SecureDatagramSocket extends DatagramSocket {
     public static final int HEADER_SIZE = 5;
-    byte[] keyBytes = new byte[]{
-            0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
-            0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
-            0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef,
-            0x01, 0x23, 0x45, 0x67, (byte) 0x89, (byte) 0xab, (byte) 0xcd, (byte) 0xef
-    }; // 256 bit key
+    byte[] keyBytes;
 
-    byte[] ivBytes =
-            new byte[]{0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00,
-                    0x08, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
-            }; // 128 bit IV
-
-    SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
-    IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
-    Cipher cipher = null;
-    Mac hMac = null;
+    byte[] ivBytes;
+    SecretKeySpec key;
+    IvParameterSpec ivSpec;
+    Mac hMac;
+    Cipher cipher;
     Key hMacKey;
+
 
     public SecureDatagramSocket() throws SocketException {
         super();
+        init();
     }
+
 
     public SecureDatagramSocket(SocketAddress inSocketAddress) throws SocketException {
         super(inSocketAddress);
+        init();
     }
 
 
+    private void init() {
+
+
+        InputStream inputStream = null;
+        try {
+            inputStream = new FileInputStream("pt/unl/fct/srsc/common/config.properties");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            System.err.println("Configuration file not found!");
+            System.exit(1);
+        }
+
+        Properties properties = new Properties();
+        try {
+            properties.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        String algorithm = properties.getProperty("algorithm");
+        String options = properties.getProperty("options");
+        String hmac = properties.getProperty("hmac");
+        keyBytes = Utils.decodeHexString(properties.getProperty("keyBytes"));
+        ivBytes = Utils.decodeHexString(properties.getProperty("ivBytes"));
+        byte[] hmacBytes = Utils.decodeHexString(properties.getProperty("hmacBytes"));
+        key = new SecretKeySpec(keyBytes, algorithm);
+        ivSpec = new IvParameterSpec(ivBytes);
+        cipher = null;
+        hMac = null;
+        try {
+            cipher = Cipher.getInstance(options);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            hMac = Mac.getInstance(hmac);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        hMacKey = new SecretKeySpec(hmacBytes, hmac);
+    }
+
     @Override
     public void send(DatagramPacket datagramPacket) throws IOException {
-        init();
         try {
             cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
         } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
@@ -90,28 +128,15 @@ public class SecureDatagramSocket extends DatagramSocket {
         dos.flush();
         datagramPacket.setData(baos.toByteArray(), 0, baos.size());
         super.send(datagramPacket);
+        dos.close();
+        baos.close();
     }
 
-    private void init() {
-        try {
-            cipher = Cipher.getInstance("AES/CTR/NoPadding");
-        } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            hMac = Mac.getInstance("HmacSHA512");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        hMacKey = new SecretKeySpec(key.getEncoded(), "HmacSHA512");
-    }
 
 
     @Override
     public synchronized void receive(DatagramPacket datagramPacket) throws IOException {
         super.receive(datagramPacket);
-        init();
 
         ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
         DataInputStream dis = new DataInputStream(bais);
