@@ -182,8 +182,14 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-        } catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
+        } catch (InvalidKeyException e) {
             e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            try {
+                cipher.init(Cipher.DECRYPT_MODE, key);
+            } catch (InvalidKeyException ex) {
+                ex.printStackTrace();
+            }
         }
 
         int ptLength = 0;
