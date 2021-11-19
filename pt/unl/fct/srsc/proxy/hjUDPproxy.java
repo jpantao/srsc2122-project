@@ -46,6 +46,7 @@ class hjUDPproxy {
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
                 s -> parseSocketAddress(s)).collect(Collectors.toSet());
 
+        // Changed HERE
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
         byte[] buffer = new byte[4 * 1024];
@@ -56,6 +57,7 @@ class hjUDPproxy {
 
             System.out.print("*");
             for (SocketAddress outSocketAddress : outSocketAddressSet) {
+                // Changed HERE
                 outSocket.send(new DatagramPacket(inPacket.getData(), inPacket.getLength(), outSocketAddress));
             }
         }

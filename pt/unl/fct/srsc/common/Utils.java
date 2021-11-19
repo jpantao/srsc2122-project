@@ -72,6 +72,16 @@ public class Utils
         
         return new IvParameterSpec(ivBytes);
     }
+
+    public static IvParameterSpec createCtrIvForBLOWFISH(
+        SecureRandom    random)
+    {
+        byte[]          ivBytes = new byte[8];
+
+        random.nextBytes(ivBytes);
+
+        return new IvParameterSpec(ivBytes);
+    }
     
     /**
      * Converte um byte array de 8 bits numa string

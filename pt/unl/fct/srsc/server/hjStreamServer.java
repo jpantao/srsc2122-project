@@ -27,6 +27,7 @@ class hjStreamServer {
 		DataInputStream g = new DataInputStream( new FileInputStream(args[0]) );
 		byte[] buff = new byte[4096];
 
+		// Changed HERE
 		SecureDatagramSocket s = new SecureDatagramSocket();
 		InetSocketAddress addr = new InetSocketAddress( args[1], Integer.parseInt(args[2]));
 		DatagramPacket p = new DatagramPacket(buff, buff.length, addr );
@@ -44,7 +45,7 @@ class hjStreamServer {
 			long t = System.nanoTime();
 			Thread.sleep( Math.max(0, ((time-q0)-(t-t0))/1000000) );
 
-		        // send packet (with a frame payload)
+			// send packet (with a frame payload)
 			// Frames sent in clear (no encryption)
 			s.send( p );
 			System.out.print( "." );

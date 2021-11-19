@@ -9,8 +9,8 @@ import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
-import java.util.Base64;
 import java.util.Properties;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 // E (M, key1) || HMAC(M, key2)
@@ -42,6 +42,11 @@ public class SecureDatagramSocket extends DatagramSocket {
 
     private void init() {
 
+        Provider provider = Security.getProvider("BC");
+        if (provider == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+
 
         InputStream inputStream = null;
         try {
@@ -72,9 +77,15 @@ public class SecureDatagramSocket extends DatagramSocket {
         cipher = null;
         hMac = null;
         try {
-            cipher = Cipher.getInstance(options);
+            cipher = Cipher.getInstance(options, "BC");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
             e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            try {
+                cipher = Cipher.getInstance(options);
+            } catch (NoSuchAlgorithmException | NoSuchPaddingException ex) {
+                ex.printStackTrace();
+            }
         }
 
         try {
@@ -102,10 +113,6 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         int ctLength = 0;
 
-//        byte[] keyBytesBase64= Base64.getEncoder().encode(key.getEncoded());
-//        System.out.println("Key in Base64:\n" +new String(keyBytesBase64));
-
-
         try {
             ctLength = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength(), cipherText, 0);
         } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
@@ -119,26 +126,18 @@ public class SecureDatagramSocket extends DatagramSocket {
         }
         hMac.update(cipherText, 0, ctLength);
 
-
-
-//        try {
-//            ctLength += cipher.doFinal(hMac.doFinal(), 0, hMac.getMacLength(), cipherText, ctLength);
-//        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-//            e.printStackTrace();
-//        }
-
-
-
         int sizeOfCt = ctLength;
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeByte(1);
+        byte firstByte = 0b00010000;
+//        int halfByte = (firstByte >> 4);
+//        int otherHalfByte = (firstByte & 0b00001111);
+        dos.writeByte(firstByte);
         dos.writeInt(sizeOfCt);
         dos.write(cipherText, 0, ctLength);
         dos.write(hMac.doFinal(), 0, hMac.getMacLength());
         dos.flush();
         datagramPacket.setData(baos.toByteArray(), 0, baos.size());
-//        datagramPacket.setData(cipherText, 0, ctLength);
         super.send(datagramPacket);
         dos.close();
         baos.close();
@@ -154,7 +153,13 @@ public class SecureDatagramSocket extends DatagramSocket {
         DataInputStream dis = new DataInputStream(bais);
 
         byte firstByte = dis.readByte();
+        //TODO v2
+//        firstHalfByte =
+//        secondHalfByte =
         int payloadSize = dis.readInt();
+
+        dis.close();
+        bais.close();
 
         byte[] messageHash = new byte[hMac.getMacLength()];
         System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);
@@ -193,30 +198,14 @@ public class SecureDatagramSocket extends DatagramSocket {
         }
 
         int ptLength = 0;
-        byte[] plainText = new byte[4096];
+        byte[] plainText = new byte[cipher.getOutputSize(payloadSize)];
 
-//        byte[] keyBytesBase64= Base64.getEncoder().encode(key.getEncoded());
-//        System.out.println("Key in Base64:\n" +new String(keyBytesBase64));
-
-
-
-//            plainText = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize);
-          //  plainText = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength());
         try {
             ptLength = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize, plainText, 0);
 
         } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
-//        int messageLength = plainText.length - hMac.getMacLength();
-
-
-
-
-
-//                System.out.println("plain : "+ Utils.toHex(plainText, payloadSize));
-//                System.out.println("Verified w/ message-integrity and message-authentication :" + MessageDigest.isEqual(hMac.doFinal(), messageHash));
-
 
         datagramPacket.setData(plainText, 0, ptLength);
 
