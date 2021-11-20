@@ -1,11 +1,14 @@
 package pt.unl.fct.srsc.extra;
 
+import pt.unl.fct.srsc.common.Utils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.*;
 import java.security.cert.Certificate;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Scanner;
@@ -28,22 +31,10 @@ public class VoucherMinter {
     static public void main(String []args ) throws Exception {
         int value;
         int expire;
-        KeyPair issuerKp;
+        KeyPair issuerKp = null;
         KeyPair voucherKp;
-        FileInputStream outputStream;
         Date expireDate;
-
-
-
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        DataOutputStream dos = new DataOutputStream(baos);
-
-
-
-
-
-
-
         Scanner sc= new Scanner(System.in);
         System.out.println("----------- VOUCHER MINTER -----------");
         System.out.println("--------------------------------------");
@@ -96,7 +87,6 @@ public class VoucherMinter {
 
 
 
-
         baos.write(COIN_NAME.getBytes());
         baos.write(NEWLINE);
         baos.write(COIN_ISSUER.getBytes());
@@ -105,31 +95,90 @@ public class VoucherMinter {
         baos.write(NEWLINE);
         baos.write((EXPIRE_DATE + expireDate).getBytes());
         baos.write(NEWLINE);
+        baos.write((COIN_PUB_KEY + Utils.encodeHexString(voucherKp.getPublic().getEncoded())).getBytes());
+        baos.write(NEWLINE);
 
-
-
-
-
-
-        baos.flush();
-        baos.writeTo(new FileOutputStream("pt/unl/fct/srsc/common/teste"));
 
         System.out.print("Signing with coin's private key....");
+        Signature signature = null;
+        try {
+            signature = Signature.getInstance("SHA512withECDSA", "BC");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            signature = Signature.getInstance("SHA512withECDSA");
+        }
+        signature.initSign(voucherKp.getPrivate(), new SecureRandom());
+        signature.update(baos.toByteArray());
+        String sigBytes = Utils.encodeHexString(signature.sign());
         System.out.println("Done!");
+        baos.write((COIN_AUTH + sigBytes).getBytes());
+        baos.write(NEWLINE);
+
 
         System.out.print("Signing with Issuer's private key...");
+        try {
+            signature = Signature.getInstance("SHA512withECDSA", "BC");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            signature = Signature.getInstance("SHA512withECDSA");
+        }
+        if (issuerKp != null) {
+            signature.initSign(issuerKp.getPrivate(), new SecureRandom());
+        }
+        signature.update(baos.toByteArray());
+        String issuerSigBytes = Utils.encodeHexString(signature.sign());
         System.out.println("Done!");
+
+        baos.write((ISSUER_SIG + issuerSigBytes).getBytes());
+        baos.write(NEWLINE);
+
+        baos.write((ISSUER_PUB_KEY + Utils.encodeHexString(issuerKp.getPublic().getEncoded())).getBytes());
+        baos.write(NEWLINE);
+
 
         System.out.print("Hashing with sha256...");
-        System.out.println("Done!");
+        MessageDigest   hash = null;
+        try {
+            hash = MessageDigest.getInstance("SHA256", "BC");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            hash = MessageDigest.getInstance("SHA256");
+            e.printStackTrace();
+        }
 
+        byte[] sha256 = null;
+        if (hash != null) {
+            hash.update(baos.toByteArray());
+            sha256 = hash.digest();
+            System.out.println(Utils.encodeHexString(sha256));
+        }
+        System.out.println("Done!");
 
         System.out.print("Hashing with RIPMD-256...");
+        try {
+            hash = MessageDigest.getInstance("RIPEMD256", "BC");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            hash = MessageDigest.getInstance("RIPEMD256");
+            e.printStackTrace();
+        }
+
+        byte[] ripemd256 = null;
+        if (hash != null) {
+            hash.update(baos.toByteArray());
+            ripemd256 = hash.digest();
+        }
         System.out.println("Done!");
 
-
-
-
-
+        baos.write((INT_PROOF_1 + Utils.encodeHexString(sha256)).getBytes());
+        baos.write(NEWLINE);
+        baos.write((INT_PROOF_2 + Utils.encodeHexString(ripemd256)).getBytes());
+        baos.write(NEWLINE);
+        baos.flush();
+        baos.writeTo(new FileOutputStream("pt/unl/fct/srsc/extra/coin_" + sigBytes.substring(0, 15) + ".voucher"));
     }
 }
