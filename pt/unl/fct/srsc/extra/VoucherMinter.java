@@ -15,16 +15,16 @@ import java.util.Scanner;
 
 public class VoucherMinter {
 
-    public static final String COIN_NAME = "Coin Name=Movie Voucher Inc.";
-    public static final String COIN_ISSUER = "Coin Issuer=MEGAMOVIES";
-    public static final String COIN_VAlUES = "Coin Value=";
-    public static final String EXPIRE_DATE = "Expire Date=";
-    public static final String COIN_PUB_KEY = "Coin PublicKey=";
-    public static final String COIN_AUTH = "Coin Authenticity=";
-    public static final String ISSUER_SIG = "Issuer Signature=";
-    public static final String ISSUER_PUB_KEY = "Issuer PublicKey=";
-    public static final String INT_PROOF_1 = "Integrity Proof1=";
-    public static final String INT_PROOF_2 = "Integrity Proof2=";
+    public static final String COIN_NAME = "CoinName=Movie Voucher Inc.";
+    public static final String COIN_ISSUER = "CoinIssuer=MEGAMOVIES";
+    public static final String COIN_VAlUES = "CoinValue=";
+    public static final String EXPIRE_DATE = "ExpireDate=";
+    public static final String COIN_PUB_KEY = "CoinPublicKey=";
+    public static final String COIN_AUTH = "CoinAuthenticity=";
+    public static final String ISSUER_SIG = "IssuerSignature=";
+    public static final String ISSUER_PUB_KEY = "IssuerPublicKey=";
+    public static final String INT_PROOF_1 = "IntegrityProof1=";
+    public static final String INT_PROOF_2 = "IntegrityProof2=";
     public static final int NEWLINE = 10;
 
 
@@ -146,14 +146,12 @@ public class VoucherMinter {
             e.printStackTrace();
         } catch (NoSuchProviderException e) {
             hash = MessageDigest.getInstance("SHA256");
-            e.printStackTrace();
         }
 
         byte[] sha256 = null;
         if (hash != null) {
             hash.update(baos.toByteArray());
             sha256 = hash.digest();
-            System.out.println(Utils.encodeHexString(sha256));
         }
         System.out.println("Done!");
 
