@@ -13,18 +13,14 @@ import java.util.Properties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
-// E (M, key1) || HMAC(M, key2)
-
-
-
 public class SecureDatagramSocket extends DatagramSocket {
     public static final int HEADER_SIZE = 5;
     byte[] keyBytes;
     byte[] ivBytes;
     SecretKeySpec key;
     IvParameterSpec ivSpec;
-    Mac hMac;
-    Cipher cipher;
+    Mac hMac = null;
+    Cipher cipher = null;
     Key hMacKey;
 
 
@@ -74,8 +70,6 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         key = new SecretKeySpec(keyBytes, algorithm);
         ivSpec = new IvParameterSpec(ivBytes);
-        cipher = null;
-        hMac = null;
         try {
             cipher = Cipher.getInstance(options, "BC");
         } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
@@ -182,7 +176,7 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         if (!MessageDigest.isEqual(hMac.doFinal(), messageHash)) {
             System.out.println("Integrity check failed");
-            System.exit(0);
+            //TODO DROP PACKET?
         }
 
         try {
