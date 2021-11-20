@@ -17,20 +17,33 @@ package pt.unl.fct.srsc.proxy;
  *       Both configurable in the file config.properties
  */
 
+import com.sun.xml.internal.ws.api.ha.StickyFeature;
 import pt.unl.fct.srsc.common.SecureDatagramSocket;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+import java.io.*;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 class hjUDPproxy {
+
+
+    private static void startSADKDP(String sigserverAddr) {
+        String[] addr = sigserverAddr.split(":");
+
+        try (Socket socket = new Socket(addr[0], Integer.parseInt(addr[1]))) {
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+
+            //TODO: request movie code
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
         // Always null
@@ -43,6 +56,8 @@ class hjUDPproxy {
         properties.load(inputStream);
         String remote = properties.getProperty("remote");
         String destinations = properties.getProperty("localdelivery");
+
+
 
         SocketAddress inSocketAddress = parseSocketAddress(remote);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
