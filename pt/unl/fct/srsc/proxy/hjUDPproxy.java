@@ -33,10 +33,12 @@ import java.util.stream.Collectors;
 class hjUDPproxy {
     public static void main(String[] args) throws Exception {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
-        if (inputStream == null) {
-            System.err.println("Configuration file not found!");
-            System.exit(1);
-        }
+        // Always null
+//        if (inputStream == null) {
+//            System.err.println("Configuration file not found!");
+//            System.exit(1);
+//        }
+
         Properties properties = new Properties();
         properties.load(inputStream);
         String remote = properties.getProperty("remote");
@@ -44,7 +46,7 @@ class hjUDPproxy {
 
         SocketAddress inSocketAddress = parseSocketAddress(remote);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
-                s -> parseSocketAddress(s)).collect(Collectors.toSet());
+                hjUDPproxy::parseSocketAddress).collect(Collectors.toSet());
 
         // Changed HERE
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);

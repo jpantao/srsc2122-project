@@ -10,11 +10,10 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
 import java.util.Properties;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+//import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 // E (M, key1) || HMAC(M, key2)
-
 
 
 public class SecureDatagramSocket extends DatagramSocket {
@@ -42,10 +41,10 @@ public class SecureDatagramSocket extends DatagramSocket {
 
     private void init() {
 
-        Provider provider = Security.getProvider("BC");
-        if (provider == null) {
-            Security.addProvider(new BouncyCastleProvider());
-        }
+//        Provider provider = Security.getProvider("BC");
+//        if (provider == null) {
+//            Security.addProvider(new BouncyCastleProvider());
+//        }
 
 
         InputStream inputStream = null;
@@ -144,7 +143,6 @@ public class SecureDatagramSocket extends DatagramSocket {
     }
 
 
-
     @Override
     public synchronized void receive(DatagramPacket datagramPacket) throws IOException {
         super.receive(datagramPacket);
@@ -152,7 +150,8 @@ public class SecureDatagramSocket extends DatagramSocket {
         ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
         DataInputStream dis = new DataInputStream(bais);
 
-        byte firstByte = dis.readByte();
+        /*byte firstByte = */
+        dis.readByte();
         //TODO v2
 //        firstHalfByte =
 //        secondHalfByte =
