@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.common;
+package common;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -10,7 +10,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
 import java.util.Properties;
-//import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 // E (M, key1) || HMAC(M, key2)
@@ -41,15 +41,15 @@ public class SecureDatagramSocket extends DatagramSocket {
 
     private void init() {
 
-//        Provider provider = Security.getProvider("BC");
-//        if (provider == null) {
-//            Security.addProvider(new BouncyCastleProvider());
-//        }
+        Provider provider = Security.getProvider("BC");
+        if (provider == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
 
 
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream("pt/unl/fct/srsc/common/config.properties");
+            inputStream = new FileInputStream("config/common.properties");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("Configuration file not found!");

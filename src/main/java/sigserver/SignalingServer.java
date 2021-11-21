@@ -1,13 +1,10 @@
-package pt.unl.fct.srsc.sigserver;
+package sigserver;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class SignalingServer {
-
-    private ServerSocket serverSocket;
-    private Socket clientSocket;
 
     public static void main(String[] args) {
 
@@ -27,8 +24,6 @@ public class SignalingServer {
                 // launch handler
                 new Thread(() -> handleClient(client)).start();
             }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -42,7 +37,10 @@ public class SignalingServer {
                 DataInputStream in = new DataInputStream(socket.getInputStream());
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-                //TODO: handle client code
+                //TODO: (round 2) SS-AuthenticationRequest
+                //TODO: (round 4) SS-PaymentRequest
+                //TODO: (round 6) SS-TicketCredentials
+
 
                 System.out.println("Hello " + socket.getInetAddress().getHostAddress());
 

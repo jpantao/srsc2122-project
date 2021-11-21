@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.proxy;
+package proxybox;
 
 /* hjUDPproxy, 20/Mar/18
  *
@@ -17,8 +17,7 @@ package pt.unl.fct.srsc.proxy;
  *       Both configurable in the file config.properties
  */
 
-import com.sun.xml.internal.ws.api.ha.StickyFeature;
-import pt.unl.fct.srsc.common.SecureDatagramSocket;
+import common.SecureDatagramSocket;
 
 import java.io.*;
 import java.net.*;
@@ -27,17 +26,19 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class hjUDPproxy {
+class ProxyBox {
 
 
-    private static void startSADKDP(String sigserverAddr) {
+    private static void execSAPKDP(String sigserverAddr, String movie) {
         String[] addr = sigserverAddr.split(":");
 
         try (Socket socket = new Socket(addr[0], Integer.parseInt(addr[1]))) {
             DataInputStream in = new DataInputStream(socket.getInputStream());
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-            //TODO: request movie code
+            //TODO: (round 1) PB-Hello
+            //TODO: (round 3) PB-Authentication
+            //TODO: (round 5) PB-Payment
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -45,23 +46,25 @@ class hjUDPproxy {
     }
 
     public static void main(String[] args) throws Exception {
-        InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
-        // Always null
-//        if (inputStream == null) {
-//            System.err.println("Configuration file not found!");
-//            System.exit(1);
-//        }
+        InputStream inputStream = new FileInputStream("config/proxybox.properties");
 
         Properties properties = new Properties();
         properties.load(inputStream);
         String remote = properties.getProperty("remote");
         String destinations = properties.getProperty("localdelivery");
+        String sigserverAddr = properties.getProperty("sigserver");
 
+
+        // SAPKDP
+        execSAPKDP(sigserverAddr, "cars.dat");
+
+        // SRTSP
 
 
         SocketAddress inSocketAddress = parseSocketAddress(remote);
-        Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
-                hjUDPproxy::parseSocketAddress).collect(Collectors.toSet());
+        Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(","))
+                .map(ProxyBox::parseSocketAddress)
+                .collect(Collectors.toSet());
 
         // Changed HERE
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
