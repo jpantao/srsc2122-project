@@ -6,11 +6,13 @@ import messages.PBHello;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.SecureRandom;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import messages.SSAuthenticationRequest;
 
 
 public class SignalingServer {
@@ -18,7 +20,7 @@ public class SignalingServer {
     private static int PORT;
 
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
-
+    private static final SecureRandom RND = new SecureRandom();
 
     static {
         try {
@@ -41,8 +43,10 @@ public class SignalingServer {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
+            MessageSAPKDP msg;
+
             //(round 1)  receive PB-Hello
-            MessageSAPKDP msg = (MessageSAPKDP) in.readObject();
+            msg = (MessageSAPKDP) in.readObject();
             if (msg.getMsgType() != PBHello.MSG_TYPE) {
                 //TODO: handle error
                 socket.close();
@@ -51,7 +55,12 @@ public class SignalingServer {
             PBHello pbHello = (PBHello) msg;
             // TODO: verify pbHello
 
-            //TODO: (round 2) send SS-AuthenticationRequest
+            // (round 2) send SS-AuthenticationRequest
+            byte[] salt = new byte[8];
+            RND.nextBytes(salt);
+            int n1 = NONCE_COUNTER.getAndIncrement();
+            out.writeObject(new SSAuthenticationRequest(n1, salt, 2048));
+
 
 
 

@@ -18,7 +18,9 @@ package proxybox;
  */
 
 import common.SecureDatagramSocket;
+import messages.MessageSAPKDP;
 import messages.PBHello;
+import messages.SSAuthenticationRequest;
 
 import java.io.*;
 import java.net.*;
@@ -60,15 +62,25 @@ class ProxyBox {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
+            MessageSAPKDP msg;
+
             //(round 1) send PB-Hello
             out.writeObject(new PBHello(username, proxyUID));
 
-            //TODO: (round 2) receive SS-AuthenticationRequest
+            //(round 2) receive SS-AuthenticationRequest
+            msg = (MessageSAPKDP) in.readObject();
+            if (msg.getMsgType() != SSAuthenticationRequest.MSG_TYPE) {
+                //TODO: handle error
+                socket.close();
+                return;
+            }
+            SSAuthenticationRequest ssAuthenticationRequest = (SSAuthenticationRequest) msg;
+
 
             //TODO: (round 3) PB-Authentication
             //TODO: (round 5) PB-Payment
 
-        } catch (IOException e) {
+        } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
