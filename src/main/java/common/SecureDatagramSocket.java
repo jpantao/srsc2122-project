@@ -49,7 +49,7 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream("config/common.properties");
+            inputStream = new FileInputStream("resources/common.properties");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("Configuration file not found!");

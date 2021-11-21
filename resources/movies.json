@@ -1,0 +1,24 @@
+{
+  "cars": {
+    "name": "cars.dat",
+    "ppvprice": 1,
+    "ciphersuite": "AES/CTR/NoPadding",
+    "keysize": 256,
+    "key": "TODO",
+    "iv": null,
+    "macsuite": "HMAC-SHA256",
+    "mackeysize": 256,
+    "mackey": "TODO"
+  },
+  "monsters": {
+    "name": "monsters.dat",
+    "ppvprice": 1,
+    "ciphersuite": "AES/CTR/NoPadding",
+    "keysize": 256,
+    "key": "TODO",
+    "iv": null,
+    "macsuite": "HMAC-SHA256",
+    "mackeysize": 256,
+    "mackey": "TODO"
+  }
+}
