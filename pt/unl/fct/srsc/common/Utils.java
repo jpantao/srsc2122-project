@@ -3,9 +3,9 @@ package pt.unl.fct.srsc.common;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
+import java.io.*;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 /**
  * Utilities 
@@ -182,4 +182,37 @@ public class Utils
         }
         return hexStringBuffer.toString();
     }
+
+    public static void generatePBId() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
+        FileInputStream is = new FileInputStream("pt/unl/fct/srsc/common/this.keystore");
+
+        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keystore.load(is, "srsc2122".toCharArray());
+
+        String keyAlias = "proxybox";
+        KeyPair proxyBoxKp = null;
+        byte[] id = new byte[123];
+        byte[] random256 = new byte[32];
+        SecureRandom random = new SecureRandom();
+
+        Key key = keystore.getKey(keyAlias, "srsc2122".toCharArray());
+        if (key instanceof PrivateKey) {
+            Certificate cert = (Certificate) keystore.getCertificate(keyAlias);
+            PublicKey publicKey = cert.getPublicKey();
+            proxyBoxKp = new KeyPair(publicKey, (PrivateKey) key);
+        }
+
+        if (proxyBoxKp != null) {
+            byte[] encoded = proxyBoxKp.getPublic().getEncoded();
+            System.arraycopy(encoded, 0, id, 0, encoded.length);
+        }
+        random.nextBytes(random256);
+        System.arraycopy(random256, 0, id, 91, 32);
+        DataOutputStream temp = new DataOutputStream(new FileOutputStream("pt/unl/fct/srsc/common/id.txt"));
+        String tempString = Utils.encodeHexString(id);
+        temp.writeBytes(tempString);
+        temp.flush();
+        temp.close();
+    }
+
 }
