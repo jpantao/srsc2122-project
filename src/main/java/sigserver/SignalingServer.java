@@ -17,21 +17,13 @@ import messages.SSAuthenticationRequest;
 
 public class SignalingServer {
 
-    private static int PORT;
-
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
     private static final SecureRandom RND = new SecureRandom();
 
     static {
         try {
-            InputStream inputStream = new FileInputStream("resources/sigserver.properties");
-            Properties properties = new Properties();
-            properties.load(inputStream);
-            PORT = Integer.parseInt(properties.getProperty("port"));
-
             JsonObject users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
             JsonObject movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
-
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -77,7 +69,12 @@ public class SignalingServer {
 
 
     public static void main(String[] args) {
-        try (ServerSocket srv = new ServerSocket(PORT)) {
+        if (args.length != 1){
+            System.out.println("usage: SignalingServer <port>");
+            System.exit(-1);
+        }
+
+        try (ServerSocket srv = new ServerSocket(Integer.parseInt(args[0]))) {
             // server is listening on port 1234
             srv.setReuseAddress(true);
 
