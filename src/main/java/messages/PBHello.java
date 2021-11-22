@@ -4,8 +4,8 @@ public class PBHello extends MessageSAPKDP{
 
     public static final int MSG_TYPE = 1;
 
-    private String userID;
-    private String proxyID;
+    private final String userID;
+    private final String proxyID;
 
     public PBHello(String userID, String proxyID) {
         super(MSG_TYPE);

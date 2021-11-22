@@ -17,13 +17,20 @@ package proxybox;
  *       Both configurable in the file config.properties
  */
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import common.SecureDatagramSocket;
+import common.Utils;
 import messages.MessageSAPKDP;
 import messages.PBHello;
 import messages.SSAuthenticationRequest;
 
+import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
@@ -39,6 +46,17 @@ class ProxyBox {
     private static String strserver;
     private static String sigserver;
     private static String mpegplayers;
+
+    private static JsonObject users, movies;
+
+    static {
+        try {
+            users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
+            movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private static void loadConfig() {
         try {
@@ -64,10 +82,10 @@ class ProxyBox {
 
             MessageSAPKDP msg;
 
-            //(round 1) send PB-Hello
+            // (round 1) send PB-Hello
             out.writeObject(new PBHello(username, proxyUID));
 
-            //(round 2) receive SS-AuthenticationRequest
+            // (round 2) receive SS-AuthenticationRequest
             msg = (MessageSAPKDP) in.readObject();
             if (msg.getMsgType() != SSAuthenticationRequest.MSG_TYPE) {
                 //TODO: handle error
@@ -76,8 +94,11 @@ class ProxyBox {
             }
             SSAuthenticationRequest ssAuthenticationRequest = (SSAuthenticationRequest) msg;
 
+            //TODO: (round 3) send PB-Authentication
+            PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
 
-            //TODO: (round 3) PB-Authentication
+
+
             //TODO: (round 5) PB-Payment
 
         } catch (IOException | ClassNotFoundException e) {
@@ -93,7 +114,13 @@ class ProxyBox {
                     username = args[++i];
                     break;
                 case "-password":
-                    password = args[++i];
+                    try {
+                        MessageDigest md = MessageDigest.getInstance("SHA-512");
+                        password = Utils.toHex(md.digest(args[++i].getBytes(StandardCharsets.UTF_8)));
+                        System.out.println(password);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 case "-keystore":
                     keystore = args[++i];

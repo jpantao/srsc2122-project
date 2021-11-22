@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public abstract class MessageSAPKDP implements Serializable {
 
-    private int msgType;
+    private final int msgType;
 
     public MessageSAPKDP(int msgType) {
         this.msgType = msgType;

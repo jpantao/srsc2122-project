@@ -19,11 +19,13 @@ public class SignalingServer {
 
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
     private static final SecureRandom RND = new SecureRandom();
+    private static JsonObject users, movies;
+
 
     static {
         try {
-            JsonObject users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
-            JsonObject movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
+            users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
+            movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -52,8 +54,6 @@ public class SignalingServer {
             RND.nextBytes(salt);
             int n1 = NONCE_COUNTER.getAndIncrement();
             out.writeObject(new SSAuthenticationRequest(n1, salt, 2048));
-
-
 
 
 
