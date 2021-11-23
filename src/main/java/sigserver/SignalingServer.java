@@ -4,8 +4,6 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.security.cert.CertificateException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,12 +20,13 @@ import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import static sigserver.sapkdp.ProtoSAPKDP.VERSION;
 import static sigserver.sapkdp.ProtoSAPKDP.genPBECipher;
 
 
 public class SignalingServer {
 
-    public static final String CONFIG = "resources/sapkdp.properties";
+
     public static final String KEYSTORE = "resources/this.keystore";
     public static final String PROXYBOX_KEYALIAS = "proxybox";
     public static final String SIGSERVER_KEYALIAS = "signalingserver";
@@ -36,11 +35,9 @@ public class SignalingServer {
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
     private static JsonObject users, movies;
 
-    private static String hmacsuite, pbesuite;
-    private static Key hmackey;
-
-    private static PrivateKey prvkey;
-    private static PublicKey pubkey;
+    private static Properties properties;
+    private static PrivateKey prv;
+    private static PublicKey pubProxyBox;
 
 
     static {
@@ -53,18 +50,15 @@ public class SignalingServer {
                 Security.addProvider(new BouncyCastleProvider());
             }
 
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(CONFIG));
-            pbesuite = properties.getProperty("pbesuite");
-            hmacsuite = properties.getProperty("hmacsuite");
-            hmackey = new SecretKeySpec(Utils.decodeHexString(properties.getProperty("hmackey")), "HmacSHA512");
+            properties = new Properties();
+            properties.load(new FileInputStream(ProtoSAPKDP.CONFIG));
 
             KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASS);
 
             //TODO: use truststores instead of having all the keypairs in on keystores
-            prvkey = (PrivateKey) ks.getKey(PROXYBOX_KEYALIAS, KEYSTORE_PASS);
-            pubkey = ks.getCertificate(SIGSERVER_KEYALIAS).getPublicKey();
+            prv = (PrivateKey) ks.getKey(PROXYBOX_KEYALIAS, KEYSTORE_PASS);
+            pubProxyBox = ks.getCertificate(SIGSERVER_KEYALIAS).getPublicKey();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,8 +71,9 @@ public class SignalingServer {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             DataInputStream in = new DataInputStream(socket.getInputStream());
 
-            Mac hmac = Mac.getInstance(hmacsuite);
-            hmac.init(hmackey);
+            Mac hmac = Mac.getInstance(properties.getProperty("HMACsuite"));
+            hmac.init(new SecretKeySpec(Utils.decodeHexString(
+                    properties.getProperty("hmackey")), properties.getProperty("HMACsuite")));
 
             int msgType;
             Header header;
@@ -121,7 +116,7 @@ public class SignalingServer {
             msgType = MessageSAPKDP.Type.PB_AUTH.msgType;
             String pw = users.get(pbHello.getUserID()).getAsJsonObject().get("password").getAsString();
 
-            Cipher pbeCipher = genPBECipher(Cipher.DECRYPT_MODE, pw, pbesuite, salt, counter);
+            Cipher pbeCipher = genPBECipher(Cipher.DECRYPT_MODE, pw, properties.getProperty("PBEsuite"), properties.getProperty("provider"), salt, counter);
             headerBytes = new byte[Header.BYTE_LEN];
             in.read(headerBytes);
             header = new Header(headerBytes);
@@ -154,8 +149,26 @@ public class SignalingServer {
             msgType = MessageSAPKDP.Type.SS_PAYREQ.msgType;
             float price = movies.get(pbAuthentication.getMovieID()).getAsJsonObject().get("ppvprice").getAsFloat();
             int n3 = pbAuthentication.getNonce2();
-
             SSPaymentRequest paymentRequest = new SSPaymentRequest(price, n3 + 1, NONCE_COUNTER.getAndIncrement());
+
+            payload = MessageSAPKDP.serialize(paymentRequest);
+            Signature signature = Signature.getInstance(properties.getProperty("ECDSAsuite"), properties.getProperty("provider"));
+            signature.initSign(prv, new SecureRandom());
+            signature.update(payload);
+            byte[] sigBytes = signature.sign();
+
+            header = new Header(VERSION, msgType, (short) payload.length);
+
+            hmac.update(payload);
+            byte[] intCheck = hmac.doFinal();
+
+            out.write(header.encode());
+            out.write(payload);
+            out.writeInt(sigBytes.length);
+            out.write(sigBytes);
+            out.write(intCheck);
+
+            System.out.println("Sent " + paymentRequest);
 
 
             //TODO: (round 5) recv PB-Payment
@@ -191,6 +204,7 @@ public class SignalingServer {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
 }

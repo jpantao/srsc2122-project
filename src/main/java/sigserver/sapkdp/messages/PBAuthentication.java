@@ -1,6 +1,7 @@
 package sigserver.sapkdp.messages;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class PBAuthentication extends MessageSAPKDP {
 
@@ -48,8 +49,8 @@ public class PBAuthentication extends MessageSAPKDP {
             try {
                 dao.writeInt(msg.nonce1);
                 dao.writeInt(msg.nonce2);
-                dao.writeInt(msg.movieID.length());
-                dao.writeChars(msg.movieID);
+                dao.writeInt(msg.movieID.getBytes().length);
+                dao.write(msg.movieID.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -70,12 +71,8 @@ public class PBAuthentication extends MessageSAPKDP {
             try {
                 nonce1 = dai.readInt();
                 nonce2 = dai.readInt();
-
-                int movieIDSize = dai.readInt();
-                byte[] movieIDBytes = new byte[movieIDSize];
-                int read = dai.read(movieIDBytes);
-                if (read != movieIDSize)
-                    throw new IOException("read " + read + " should have been " + movieIDSize);
+                movieID = getString(dai);
+                System.out.println(movieID);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -3,10 +3,7 @@ package sigserver.sapkdp;
 import common.Utils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import sigserver.SignalingServer;
-import sigserver.sapkdp.messages.MessageSAPKDP;
-import sigserver.sapkdp.messages.PBAuthentication;
-import sigserver.sapkdp.messages.PBHello;
-import sigserver.sapkdp.messages.SSAuthenticationRequest;
+import sigserver.sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -27,19 +24,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProtoSAPKDP {
 
+
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
 
     public static final int VERSION = 2;
-
+    public static final String CONFIG = "resources/sapkdp.properties";
 
     private final String sigserver, proxyBoxID, userID, userPW;
     private final PrivateKey prv;
     private final PublicKey pubSigserver;
 
+    private final Properties properties;
 
-    // props
-    private String hmacsuite, pbesuite;
-    private Key hmackey;
 
     public static void logProtoInstance(ProtoSAPKDP p) {
         System.out.println("--- New SAPKDP instance ---");
@@ -61,16 +57,14 @@ public class ProtoSAPKDP {
         this.pubSigserver = pubSigserver;
         this.prv = prv;
 
+        properties = new Properties();
         try {
-            Properties properties = new Properties();
-            properties.load(new FileInputStream(SignalingServer.CONFIG));
-            this.pbesuite = properties.getProperty("pbesuite");
-            this.hmacsuite = properties.getProperty("hmacsuite");
-            this.hmackey = new SecretKeySpec(Utils.decodeHexString(properties.getProperty("hmackey")), "HmacSHA512");
+            properties.load(new FileInputStream(CONFIG));
             logProtoInstance(this);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
 
         Provider provider = Security.getProvider("BC");
         if (provider == null) {
@@ -86,8 +80,9 @@ public class ProtoSAPKDP {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             DataInputStream in = new DataInputStream(socket.getInputStream());
 
-            Mac hmac = Mac.getInstance(hmacsuite);
-            hmac.init(hmackey);
+            Mac hmac = Mac.getInstance(properties.getProperty("HMACsuite"));
+            hmac.init(new SecretKeySpec(Utils.decodeHexString(
+                    properties.getProperty("hmackey")), properties.getProperty("HMACsuite")));
 
 
             int msgType;
@@ -115,6 +110,7 @@ public class ProtoSAPKDP {
                 return;
             }
 
+
             payload = new byte[header.getPayloadSize()];
             in.read(payload);
             SSAuthenticationRequest authReq = (SSAuthenticationRequest) MessageSAPKDP.deserialize(header.getMsgType(), payload);
@@ -123,7 +119,7 @@ public class ProtoSAPKDP {
 
             // (round 3) send PB-Authentication
             msgType = MessageSAPKDP.Type.PB_AUTH.msgType;
-            Cipher pbeCipher = genPBECipher(Cipher.ENCRYPT_MODE, userPW, pbesuite, authReq.getSalt(), authReq.getCounter());
+            Cipher pbeCipher = genPBECipher(Cipher.ENCRYPT_MODE, userPW, properties.getProperty("PBEsuite"), properties.getProperty("provider"), authReq.getSalt(), authReq.getCounter());
 
             int n1 = authReq.getNonce();
             int n2 = NONCE_COUNTER.getAndIncrement();
@@ -141,13 +137,41 @@ public class ProtoSAPKDP {
 
             System.out.println("Sent " + pbAuthentication);
 
-
             //TODO: (round 4) recv SS-PaymentRequest
             msgType = MessageSAPKDP.Type.SS_PAYREQ.msgType;
+            Signature signature = Signature.getInstance(properties.getProperty("ECDSAsuite"), properties.getProperty("provider"));
+            signature.initVerify(pubSigserver);
 
+            headerBytes = new byte[Header.BYTE_LEN];
+            in.read(headerBytes);
+            header = new Header(headerBytes);
 
+            payload = new byte[header.getPayloadSize()];
+            in.read(payload);
+            hmac.update(payload);
 
+            byte[] sigBytes = new byte[in.readInt()];
+            in.read(sigBytes);
 
+            byte[] messageHash = new byte[hmac.getMacLength()];
+            in.read(messageHash);
+
+            if (!MessageDigest.isEqual(messageHash, hmac.doFinal())) {
+                //TODO: handle error
+                socket.close();
+                return;
+            }
+
+            signature.update(payload);
+            if (!signature.verify(sigBytes)) {
+                System.out.println("DEEEEEBUG");
+                //TODO: handle error
+                socket.close();
+                return;
+            }
+
+            SSPaymentRequest paymentRequest = (SSPaymentRequest) MessageSAPKDP.deserialize(msgType, payload);
+            System.out.println("Recv " + paymentRequest);
 
             //TODO: (round 5) send PB-Payment
             //TODO: (round 6) recv PB-Payment SS-TicketCredentials
@@ -157,10 +181,10 @@ public class ProtoSAPKDP {
         }
     }
 
-    public static Cipher genPBECipher(int opmode, String pw, String ciphersuite, byte[] salt, int iterationCounter) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchProviderException {
+    public static Cipher genPBECipher(int opmode, String pw, String ciphersuite, String provider,byte[] salt, int iterationCounter) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchProviderException {
         PBEKeySpec pbeSpec = new PBEKeySpec(pw.toCharArray());
-        Key k = SecretKeyFactory.getInstance(ciphersuite, "BC").generateSecret(pbeSpec);
-        Cipher c = Cipher.getInstance(ciphersuite, "BC");
+        Key k = SecretKeyFactory.getInstance(ciphersuite).generateSecret(pbeSpec);
+        Cipher c = Cipher.getInstance(ciphersuite, provider);
         c.init(opmode, k, new PBEParameterSpec(salt, iterationCounter));
         return c;
     }
