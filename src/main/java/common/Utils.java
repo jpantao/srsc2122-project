@@ -42,9 +42,7 @@ public class Utils
      * @param random        - source ou seed para random
      * @return Vector IvParameterSpec inicializado
      */
-    public static IvParameterSpec createCtrIvForAES(
-            int messageNumber,
-            SecureRandom random) {
+    public static IvParameterSpec createCtrIvForAES(int messageNumber, SecureRandom random) {
         byte[] ivBytes = new byte[16];
 
         // initially randomize

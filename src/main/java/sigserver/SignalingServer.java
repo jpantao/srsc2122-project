@@ -1,18 +1,13 @@
 package sigserver;
 
-import messages.MessageSAPKDP;
-import messages.PBHello;
-
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.SecureRandom;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import messages.SSAuthenticationRequest;
 
 
 public class SignalingServer {
@@ -37,39 +32,29 @@ public class SignalingServer {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
-            MessageSAPKDP msg;
 
-            //(round 1)  receive PB-Hello
-            msg = (MessageSAPKDP) in.readObject();
-            if (msg.getMsgType() != PBHello.MSG_TYPE) {
-                //TODO: handle error
-                socket.close();
-                return;
-            }
-            PBHello pbHello = (PBHello) msg;
-            // TODO: verify pbHello
 
-            // (round 2) send SS-AuthenticationRequest
-            byte[] salt = new byte[8];
-            RND.nextBytes(salt);
-            int n1 = NONCE_COUNTER.getAndIncrement();
-            out.writeObject(new SSAuthenticationRequest(n1, salt, 2048));
+            //TODO: (round 1) recv PB-Hello
 
 
 
-            //TODO: (round 4) SS-PaymentRequest
-            //TODO: (round 6) SS-TicketCredentials
+
+            //TODO: (round 2) send SS-AuthenticationRequest
+            //TODO: (round 3) recv PB-Authentication
+            //TODO: (round 4) send SS-PaymentRequest
+            //TODO: (round 5) recv PB-Payment
+            //TODO: (round 6) send PB-Payment SS-TicketCredentials
 
 
-            Thread.sleep(1000);
-        } catch (InterruptedException | IOException | ClassNotFoundException e) {
+//            Thread.sleep(1000);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
     public static void main(String[] args) {
-        if (args.length != 1){
+        if (args.length != 1) {
             System.out.println("usage: SignalingServer <port>");
             System.exit(-1);
         }

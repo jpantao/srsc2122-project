@@ -1,31 +1,8 @@
 package proxybox;
 
-/* hjUDPproxy, 20/Mar/18
- *
- * This is a very simple (transparent) UDP proxy
- * The proxy can listening on a remote source (server) UDP sender
- * and transparently forward received datagram packets in the
- * delivering endpoint
- *
- * Possible Remote listening endpoints:
- *    Unicast IP address and port: configurable in the file config.properties
- *    Multicast IP address and port: configurable in the code
- *
- * Possible local listening endpoints:
- *    Unicast IP address and port
- *    Multicast IP address and port
- *       Both configurable in the file config.properties
- */
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import common.SecureDatagramSocket;
 import common.Utils;
-import messages.MessageSAPKDP;
-import messages.PBHello;
-import messages.SSAuthenticationRequest;
 
-import javax.crypto.spec.PBEKeySpec;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
@@ -46,17 +23,9 @@ class ProxyBox {
     private static String strserver;
     private static String sigserver;
     private static String mpegplayers;
+    private static String pbeCiphersuite;
 
-    private static JsonObject users, movies;
 
-    static {
-        try {
-            users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
-            movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     private static void loadConfig() {
         try {
@@ -66,7 +35,8 @@ class ProxyBox {
             strserver = properties.getProperty("strserver");
             mpegplayers = properties.getProperty("mpegplayers");
             sigserver = properties.getProperty("sigserver");
-            proxyUID = properties.getProperty("proxyUID");
+            proxyUID = properties.getProperty("proxyBoxID");
+            pbeCiphersuite = properties.getProperty("pbeciphersuite");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,28 +50,34 @@ class ProxyBox {
             ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 
-            MessageSAPKDP msg;
+//            MessageSAPKDP msg;
+//
+//            // (round 1) send PB-Hello
+//            out.writeObject(new PBHello(username, proxyUID));
+//
+//            // (round 2) receive SS-AuthenticationRequest
+//            msg = (MessageSAPKDP) in.readObject();
+//            if (msg.getMsgType() != SSAuthenticationRequest.MSG_TYPE) {
+//                //TODO: handle error
+//                socket.close();
+//                return;
+//            }
+//            SSAuthenticationRequest authReq = (SSAuthenticationRequest) msg;
+//
+//            //TODO: (round 3) send PB-Authentication
+//            PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
+//            SecretKeyFactory keyFAct = SecretKeyFactory.getInstance(pbeCiphersuite);
+//            Key pbeKey = keyFAct.generateSecret(pbeSpec);
+//
+//            Cipher cipher = Cipher.getInstance(pbeCiphersuite);
+//            cipher.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(authReq.getSalt(), authReq.getCounter()));
+//
+//
+//            out.writeObject(new PBAuthentication(null, null));
+//
+//            //TODO: (round 5) PB-Payment
 
-            // (round 1) send PB-Hello
-            out.writeObject(new PBHello(username, proxyUID));
-
-            // (round 2) receive SS-AuthenticationRequest
-            msg = (MessageSAPKDP) in.readObject();
-            if (msg.getMsgType() != SSAuthenticationRequest.MSG_TYPE) {
-                //TODO: handle error
-                socket.close();
-                return;
-            }
-            SSAuthenticationRequest ssAuthenticationRequest = (SSAuthenticationRequest) msg;
-
-            //TODO: (round 3) send PB-Authentication
-            PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
-
-
-
-            //TODO: (round 5) PB-Payment
-
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
