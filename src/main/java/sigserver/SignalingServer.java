@@ -118,11 +118,11 @@ public class SignalingServer {
             in.read(payload);
             hmac.update(payload);
 
-            int hashSize = in.readInt();
-            byte[] messageHash = new byte[hashSize];
+
+            byte[] messageHash = new byte[hmac.getMacLength()];
             in.read(messageHash);
 
-            System.out.println("hash " + Arrays.toString(messageHash));
+
             if (!MessageDigest.isEqual(messageHash, hmac.doFinal())) {
                 //TODO: handle error
                 socket.close();

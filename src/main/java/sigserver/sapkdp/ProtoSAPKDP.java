@@ -136,10 +136,7 @@ public class ProtoSAPKDP {
 
             out.write(header.encode());
             out.write(payload);
-            out.writeInt(intCheck.length);
             out.write(intCheck);
-
-            System.out.println("hash " + Arrays.toString(intCheck));
 
             System.out.println("Sent " + pbAuthentication);
 
