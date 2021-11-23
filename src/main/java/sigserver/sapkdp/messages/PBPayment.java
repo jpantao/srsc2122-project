@@ -28,6 +28,15 @@ public class PBPayment extends MessageSAPKDP{
         return paymentCoin;
     }
 
+    @Override
+    public String toString() {
+        return "PBPayment{" +
+                "nonce1=" + nonce1 +
+                ", nonce2=" + nonce2 +
+                ", paymentCoin=" + paymentCoin +
+                '}';
+    }
+
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {
         @Override
         public byte[] serialize(MessageSAPKDP messageSAPKDP) {

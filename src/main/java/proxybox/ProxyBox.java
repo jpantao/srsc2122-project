@@ -4,9 +4,11 @@ import common.SecureDatagramSocket;
 import common.Utils;
 import sigserver.sapkdp.ProtoSAPKDP;
 
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -19,29 +21,6 @@ class ProxyBox {
     private static String password;
     private static String keystore;
     private static String proxyinfo;
-
-    private static String proxyUID;
-    private static String strserver;
-    private static String sigserver;
-    private static String mpegplayers;
-    private static String pbeCiphersuite;
-
-
-    private static void loadConfig() {
-        try {
-            InputStream inputStream = new FileInputStream(proxyinfo);
-            Properties properties = new Properties();
-            properties.load(inputStream);
-            strserver = properties.getProperty("strserver");
-            mpegplayers = properties.getProperty("mpegplayers");
-            sigserver = properties.getProperty("sigserver");
-            proxyUID = properties.getProperty("proxyBoxID");
-            pbeCiphersuite = properties.getProperty("pbeciphersuite");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
 
 
     private static void argparse(String[] args) {
@@ -78,13 +57,24 @@ class ProxyBox {
     }
 
     public static void main(String[] args) throws Exception {
-
         argparse(args);
-        loadConfig();
+
+        InputStream inputStream = new FileInputStream(proxyinfo);
+        Properties properties = new Properties();
+        properties.load(inputStream);
+        String strserver = properties.getProperty("strserver");
+        String mpegplayers = properties.getProperty("mpegplayers");
+        String sigserver = properties.getProperty("sigserver");
+        String proxyBoxID = properties.getProperty("proxyBoxID");
+        String pbeCiphersuite = properties.getProperty("pbeciphersuite");
+
 
         // SAPKDP
-        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyinfo, username, password, null, null);
-        sapkdp.handshake();
+        Key pubkey = null;
+        Key prvkey = null;
+
+        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyBoxID, username, password, sigserver, pubkey, prvkey);
+        sapkdp.handshake("cars");
 
         // SRTSP
 

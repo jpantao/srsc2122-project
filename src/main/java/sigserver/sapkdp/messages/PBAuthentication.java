@@ -28,6 +28,15 @@ public class PBAuthentication extends MessageSAPKDP {
         return movieID;
     }
 
+    @Override
+    public String toString() {
+        return "PBAuthentication{" +
+                "nonce1=" + nonce1 +
+                ", nonce2=" + nonce2 +
+                ", movieID='" + movieID + '\'' +
+                '}';
+    }
+
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {
         @Override
         public byte[] serialize(MessageSAPKDP messageSAPKDP) {

@@ -29,6 +29,15 @@ public class SSPaymentRequest extends MessageSAPKDP {
         return nonce2;
     }
 
+    @Override
+    public String toString() {
+        return "SSPaymentRequest{" +
+                "price=" + price +
+                ", nonce1=" + nonce1 +
+                ", nonce2=" + nonce2 +
+                '}';
+    }
+
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {
         @Override
         public byte[] serialize(MessageSAPKDP messageSAPKDP) {

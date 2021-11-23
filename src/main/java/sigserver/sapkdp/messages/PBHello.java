@@ -3,7 +3,6 @@ package sigserver.sapkdp.messages;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
-import static sigserver.sapkdp.messages.Utils.getString;
 
 public class PBHello extends MessageSAPKDP {
 
@@ -25,6 +24,13 @@ public class PBHello extends MessageSAPKDP {
         return proxyBoxID;
     }
 
+    @Override
+    public String toString() {
+        return "PBHello{" +
+                "userID='" + userID + '\'' +
+                ", proxyBoxID='" + proxyBoxID + '\'' +
+                '}';
+    }
 
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {
         @Override

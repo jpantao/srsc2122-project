@@ -1,6 +1,7 @@
 package sigserver.sapkdp.messages;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class SSAuthenticationRequest extends MessageSAPKDP {
 
@@ -27,6 +28,15 @@ public class SSAuthenticationRequest extends MessageSAPKDP {
 
     public int getCounter() {
         return counter;
+    }
+
+    @Override
+    public String toString() {
+        return "SSAuthenticationRequest{" +
+                "nonce=" + nonce +
+                ", salt=" + Arrays.toString(salt) +
+                ", counter=" + counter +
+                '}';
     }
 
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {

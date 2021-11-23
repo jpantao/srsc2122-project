@@ -2,7 +2,7 @@ package sigserver.sapkdp.messages;
 
 import java.io.*;
 
-import static sigserver.sapkdp.messages.Utils.*;
+
 
 public class SSTicketCredentials extends MessageSAPKDP {
 
@@ -57,6 +57,20 @@ public class SSTicketCredentials extends MessageSAPKDP {
 
     public int getNonce() {
         return nonce;
+    }
+
+    @Override
+    public String toString() {
+        return "SSTicketCredentials{" +
+                "ip='" + ip + '\'' +
+                ", port=" + port +
+                ", movieID='" + movieID + '\'' +
+                ", ciphersuiteConf='" + ciphersuiteConf + '\'' +
+                ", cryptoSA='" + cryptoSA + '\'' +
+                ", sessionKey='" + sessionKey + '\'' +
+                ", macKey='" + macKey + '\'' +
+                ", nonce=" + nonce +
+                '}';
     }
 
     public static Serializer<MessageSAPKDP> serializer = new Serializer<MessageSAPKDP>() {
