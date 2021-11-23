@@ -8,15 +8,21 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 class ProxyBox {
+
+    public static final String KEYSTORE = "resources/this.keystore";
+    public static final String PROXYBOX_KEYALIAS = "proxybox";
+    public static final String SIGSERVER_KEYALIAS = "signalingserver";
+
+    public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
+
+
     private static String username;
     private static String password;
     private static String keystore;
@@ -66,17 +72,19 @@ class ProxyBox {
         String mpegplayers = properties.getProperty("mpegplayers");
         String sigserver = properties.getProperty("sigserver");
         String proxyBoxID = properties.getProperty("proxyBoxID");
-        String pbeCiphersuite = properties.getProperty("pbeciphersuite");
-
 
         // SAPKDP
-        Key pubkey = null;
-        Key prvkey = null;
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+        ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASS);
 
-        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyBoxID, username, password, sigserver, pubkey, prvkey);
+        //TODO: use truststores instead of having all the keypairs in on keystores
+        PrivateKey prvkey = (PrivateKey) ks.getKey(PROXYBOX_KEYALIAS, KEYSTORE_PASS);
+        PublicKey pubkey = ks.getCertificate(SIGSERVER_KEYALIAS).getPublicKey();
+
+        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyBoxID, username, password, sigserver, prvkey, pubkey);
         sapkdp.handshake("cars");
 
-        // SRTSP
+        //TODO: SRTSP
 
 
         SocketAddress inSocketAddress = parseSocketAddress(strserver);

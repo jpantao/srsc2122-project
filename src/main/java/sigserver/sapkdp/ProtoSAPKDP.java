@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,7 +33,9 @@ public class ProtoSAPKDP {
 
 
     private final String sigserver, proxyBoxID, userID, userPW;
-    private final Key pub, prv;
+    private final PrivateKey prv;
+    private final PublicKey pubSigserver;
+
 
     // props
     private String hmacsuite, pbesuite;
@@ -52,12 +53,12 @@ public class ProtoSAPKDP {
         System.out.println("---------------------------");
     }
 
-    public ProtoSAPKDP(String proxyBoxID, String userID, String userPW, String sigserver, Key pub, Key prv) {
+    public ProtoSAPKDP(String proxyBoxID, String userID, String userPW, String sigserver, PrivateKey prv, PublicKey pubSigserver) {
         this.proxyBoxID = proxyBoxID;
         this.userID = userID;
         this.userPW = userPW;
         this.sigserver = sigserver;
-        this.pub = pub;
+        this.pubSigserver = pubSigserver;
         this.prv = prv;
 
         try {
@@ -142,6 +143,12 @@ public class ProtoSAPKDP {
 
 
             //TODO: (round 4) recv SS-PaymentRequest
+            msgType = MessageSAPKDP.Type.SS_PAYREQ.msgType;
+
+
+
+
+
             //TODO: (round 5) send PB-Payment
             //TODO: (round 6) recv PB-Payment SS-TicketCredentials
 

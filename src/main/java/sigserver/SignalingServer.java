@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
@@ -15,10 +16,7 @@ import common.Utils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import sigserver.sapkdp.Header;
 import sigserver.sapkdp.ProtoSAPKDP;
-import sigserver.sapkdp.messages.MessageSAPKDP;
-import sigserver.sapkdp.messages.PBAuthentication;
-import sigserver.sapkdp.messages.PBHello;
-import sigserver.sapkdp.messages.SSAuthenticationRequest;
+import sigserver.sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -29,13 +27,20 @@ import static sigserver.sapkdp.ProtoSAPKDP.genPBECipher;
 
 public class SignalingServer {
 
-    public static final String CONFIG = "resources/sigserver.properties";
+    public static final String CONFIG = "resources/sapkdp.properties";
+    public static final String KEYSTORE = "resources/this.keystore";
+    public static final String PROXYBOX_KEYALIAS = "proxybox";
+    public static final String SIGSERVER_KEYALIAS = "signalingserver";
+    public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
     private static JsonObject users, movies;
 
     private static String hmacsuite, pbesuite;
     private static Key hmackey;
+
+    private static PrivateKey prvkey;
+    private static PublicKey pubkey;
 
 
     static {
@@ -53,7 +58,15 @@ public class SignalingServer {
             pbesuite = properties.getProperty("pbesuite");
             hmacsuite = properties.getProperty("hmacsuite");
             hmackey = new SecretKeySpec(Utils.decodeHexString(properties.getProperty("hmackey")), "HmacSHA512");
-        } catch (IOException e) {
+
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASS);
+
+            //TODO: use truststores instead of having all the keypairs in on keystores
+            prvkey = (PrivateKey) ks.getKey(PROXYBOX_KEYALIAS, KEYSTORE_PASS);
+            pubkey = ks.getCertificate(SIGSERVER_KEYALIAS).getPublicKey();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -108,20 +121,17 @@ public class SignalingServer {
             msgType = MessageSAPKDP.Type.PB_AUTH.msgType;
             String pw = users.get(pbHello.getUserID()).getAsJsonObject().get("password").getAsString();
 
-            Cipher pbeCipher = genPBECipher(Cipher.DECRYPT_MODE, pw, pbesuite , salt, counter);
+            Cipher pbeCipher = genPBECipher(Cipher.DECRYPT_MODE, pw, pbesuite, salt, counter);
             headerBytes = new byte[Header.BYTE_LEN];
             in.read(headerBytes);
             header = new Header(headerBytes);
-
 
             payload = new byte[header.getPayloadSize()];
             in.read(payload);
             hmac.update(payload);
 
-
             byte[] messageHash = new byte[hmac.getMacLength()];
             in.read(messageHash);
-
 
             if (!MessageDigest.isEqual(messageHash, hmac.doFinal())) {
                 //TODO: handle error
@@ -131,11 +141,25 @@ public class SignalingServer {
 
             payload = pbeCipher.doFinal(payload);
             PBAuthentication pbAuthentication = (PBAuthentication) MessageSAPKDP.deserialize(msgType, payload);
+
+            if (pbAuthentication.getNonce1() != n1 + 1) {
+                //TODO: handle error
+                socket.close();
+                return;
+            }
+
             System.out.println("Recv " + pbAuthentication);
 
             //TODO: (round 4) send SS-PaymentRequest
+            msgType = MessageSAPKDP.Type.SS_PAYREQ.msgType;
+            float price = movies.get(pbAuthentication.getMovieID()).getAsJsonObject().get("ppvprice").getAsFloat();
+            int n3 = pbAuthentication.getNonce2();
+
+            SSPaymentRequest paymentRequest = new SSPaymentRequest(price, n3 + 1, NONCE_COUNTER.getAndIncrement());
+
+
             //TODO: (round 5) recv PB-Payment
-            //TODO: (round 6) send PB-Payment SS-TicketCredentials
+            //TODO: (round 6) send SS-TicketCredentials
 
 
         } catch (Exception e) {
