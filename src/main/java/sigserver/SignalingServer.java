@@ -4,16 +4,21 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.SecureRandom;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import sigserver.sapkdp.Header;
+import sigserver.sapkdp.ProtoSAPKDP;
+import sigserver.sapkdp.messages.MessageSAPKDP;
+import sigserver.sapkdp.messages.PBHello;
+import sigserver.sapkdp.messages.SSAuthenticationRequest;
 
 
 public class SignalingServer {
 
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
-    private static final SecureRandom RND = new SecureRandom();
     private static JsonObject users, movies;
 
 
@@ -29,24 +34,48 @@ public class SignalingServer {
     private static void handleClient(Socket socket) {
         try {
             System.out.println("Handler " + socket.getInetAddress().getHostAddress());
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
+
+            Header header;
+            byte[] headerBytes;
+            byte[] payload;
 
 
+            // (round 1) recv PB-Hello
+            headerBytes = new byte[Header.BYTE_LEN];
+            in.read(headerBytes);
+            header = new Header(headerBytes);
 
-            //TODO: (round 1) recv PB-Hello
+            if (header.getVersion() != ProtoSAPKDP.VERSION || header.getMsgType() != MessageSAPKDP.Type.PB_HELLO.msgType) {
+                //TODO: handle error
+                socket.close();
+                return;
+            }
 
-
+            payload = new byte[header.getPayloadSize()];
+            in.read(payload);
+            PBHello pbHello = (PBHello) MessageSAPKDP.deserialize(header.getMsgType(), payload);
+            System.out.println("PB_Hello received from " + pbHello.getUserID() + ":" + pbHello.getProxyID());
 
 
             //TODO: (round 2) send SS-AuthenticationRequest
+            int n1 = NONCE_COUNTER.getAndIncrement();
+            byte[] salt = new byte[20];
+            ThreadLocalRandom.current().nextBytes(salt);
+            int counter = ThreadLocalRandom.current().nextInt(1024, 2048);
+
+            payload = MessageSAPKDP.serialize(new SSAuthenticationRequest(n1, salt, counter));
+            header = new Header(ProtoSAPKDP.VERSION, MessageSAPKDP.Type.SS_AUTHREQ.msgType, (short) payload.length);
+            out.write(header.encode());
+            out.write(payload);
+
             //TODO: (round 3) recv PB-Authentication
             //TODO: (round 4) send SS-PaymentRequest
             //TODO: (round 5) recv PB-Payment
             //TODO: (round 6) send PB-Payment SS-TicketCredentials
 
 
-//            Thread.sleep(1000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -54,12 +83,14 @@ public class SignalingServer {
 
 
     public static void main(String[] args) {
-        if (args.length != 1) {
+        if (args.length > 2) {
             System.out.println("usage: SignalingServer <port>");
             System.exit(-1);
         }
 
-        try (ServerSocket srv = new ServerSocket(Integer.parseInt(args[0]))) {
+        int port = args.length > 0 ? Integer.parseInt(args[0]) : 8888;
+
+        try (ServerSocket srv = new ServerSocket(port)) {
             // server is listening on port 1234
             srv.setReuseAddress(true);
 

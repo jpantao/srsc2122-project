@@ -44,7 +44,7 @@ public abstract class MessageSAPKDP {
                 throw new AssertionError(String.format("Unknown opcode %d", opcode));
             return t;
         }
-        }
+    }
 
     private final Type type;
 
@@ -66,13 +66,12 @@ public abstract class MessageSAPKDP {
 
 
     public static byte[] serialize(MessageSAPKDP msg) {
-        ByteArrayOutputStream buf = new ByteArrayOutputStream();
         return msg.type.serializer.serialize(msg);
     }
 
-    public static MessageSAPKDP deserialize(int msgType, byte[] op) {
+    public static MessageSAPKDP deserialize(int msgType, byte[] msg) {
         Type type = Type.fromOpcode(msgType);
-        return type.serializer.deserialize(op);
+        return type.serializer.deserialize(msg);
     }
 
 

@@ -2,6 +2,7 @@ package proxybox;
 
 import common.SecureDatagramSocket;
 import common.Utils;
+import sigserver.sapkdp.ProtoSAPKDP;
 
 import java.io.*;
 import java.net.*;
@@ -26,7 +27,6 @@ class ProxyBox {
     private static String pbeCiphersuite;
 
 
-
     private static void loadConfig() {
         try {
             InputStream inputStream = new FileInputStream(proxyinfo);
@@ -43,45 +43,6 @@ class ProxyBox {
 
     }
 
-    private static void execSAPKDP(String movie) {
-        String[] addr = sigserver.split(":");
-
-        try (Socket socket = new Socket(addr[0], Integer.parseInt(addr[1]))) {
-            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-            ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-
-//            MessageSAPKDP msg;
-//
-//            // (round 1) send PB-Hello
-//            out.writeObject(new PBHello(username, proxyUID));
-//
-//            // (round 2) receive SS-AuthenticationRequest
-//            msg = (MessageSAPKDP) in.readObject();
-//            if (msg.getMsgType() != SSAuthenticationRequest.MSG_TYPE) {
-//                //TODO: handle error
-//                socket.close();
-//                return;
-//            }
-//            SSAuthenticationRequest authReq = (SSAuthenticationRequest) msg;
-//
-//            //TODO: (round 3) send PB-Authentication
-//            PBEKeySpec pbeSpec = new PBEKeySpec(password.toCharArray());
-//            SecretKeyFactory keyFAct = SecretKeyFactory.getInstance(pbeCiphersuite);
-//            Key pbeKey = keyFAct.generateSecret(pbeSpec);
-//
-//            Cipher cipher = Cipher.getInstance(pbeCiphersuite);
-//            cipher.init(Cipher.ENCRYPT_MODE, pbeKey, new PBEParameterSpec(authReq.getSalt(), authReq.getCounter()));
-//
-//
-//            out.writeObject(new PBAuthentication(null, null));
-//
-//            //TODO: (round 5) PB-Payment
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     private static void argparse(String[] args) {
         for (int i = 0; i < args.length; i++)
@@ -93,7 +54,6 @@ class ProxyBox {
                     try {
                         MessageDigest md = MessageDigest.getInstance("SHA-512");
                         password = Utils.toHex(md.digest(args[++i].getBytes(StandardCharsets.UTF_8)));
-                        System.out.println(password);
                     } catch (NoSuchAlgorithmException e) {
                         e.printStackTrace();
                     }
@@ -123,7 +83,8 @@ class ProxyBox {
         loadConfig();
 
         // SAPKDP
-        execSAPKDP("cars.dat");
+        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyinfo, username, password, null, null);
+        sapkdp.handshake();
 
         // SRTSP
 

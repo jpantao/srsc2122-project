@@ -1,6 +1,7 @@
 package sigserver.sapkdp.messages;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 import static sigserver.sapkdp.messages.Utils.getString;
 
@@ -36,10 +37,10 @@ public class PBHello extends MessageSAPKDP {
 
 
             try {
-                dao.writeInt(msg.userID.length());
-                dao.writeChars(msg.userID);
-                dao.writeInt(msg.proxyBoxID.length());
-                dao.writeChars(msg.proxyBoxID);
+                dao.writeInt(msg.userID.getBytes().length);
+                dao.write(msg.userID.getBytes());
+                dao.writeInt(msg.proxyBoxID.getBytes().length);
+                dao.write(msg.proxyBoxID.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             }

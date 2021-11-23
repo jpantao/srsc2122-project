@@ -1,14 +1,25 @@
 package sigserver.sapkdp;
 
 import common.Utils;
+import sigserver.sapkdp.messages.MessageSAPKDP;
+import sigserver.sapkdp.messages.PBHello;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.security.Key;
 import java.util.Properties;
 
 public class ProtoSAPKDP {
+
+
+    public static final int VERSION = 2;
+
+    private String sigserver, proxyBoxID, userID, userPW;
+    private Key pub, prv;
 
     public static void logProtoInstance(ProtoSAPKDP p) {
         System.out.println("--- New SAPKDP instance ---");
@@ -17,13 +28,10 @@ public class ProtoSAPKDP {
         System.out.println("proxyBoxID:\t" + p.proxyBoxID);
         System.out.println("userID:\t" + p.userID);
         System.out.println("userPW:\t" + p.userPW);
-        System.out.println("pub key:\t" + Utils.toHex(p.pub.getEncoded()));
-        System.out.println("prv key:\t" + Utils.toHex(p.prv.getEncoded()));
+//        System.out.println("pub key:\t" + Utils.toHex(p.pub.getEncoded()));
+//        System.out.println("prv key:\t" + Utils.toHex(p.prv.getEncoded()));
         System.out.println("---------------------------");
     }
-
-    private String sigserver, proxyBoxID, userID, userPW;
-    private Key pub, prv;
 
     public ProtoSAPKDP(String proxyInfoFile, String userID, String userPW, Key pub, Key prv) {
         this.userID = userID;
@@ -34,9 +42,9 @@ public class ProtoSAPKDP {
         try {
             Properties properties = new Properties();
             properties.load(new FileInputStream(proxyInfoFile));
-
             this.sigserver = properties.getProperty("sigserver");
             this.proxyBoxID = properties.getProperty("proxyBoxID");
+
 
             logProtoInstance(this);
 
@@ -49,12 +57,18 @@ public class ProtoSAPKDP {
         String[] addr = sigserver.split(":");
 
         try (Socket socket = new Socket(addr[0], Integer.parseInt(addr[1]))) {
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(socket.getInputStream());
 
+            Header header;
+            byte[] headerBytes;
+            byte[] payload;
 
-            //TODO: (round 1) send PB-Hello
-
-
-
+            // (round 1) send PB-Hello
+            payload = MessageSAPKDP.serialize(new PBHello(userID, proxyBoxID));
+            header = new Header(VERSION, MessageSAPKDP.Type.PB_HELLO.msgType, (short) payload.length);
+            out.write(header.encode());
+            out.write(payload);
 
             //TODO: (round 2) recv SS-AuthenticationRequest
             //TODO: (round 3) send PB-Authentication
@@ -66,4 +80,6 @@ public class ProtoSAPKDP {
             e.printStackTrace();
         }
     }
+
+
 }
