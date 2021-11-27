@@ -2,15 +2,22 @@ package pt.unl.fct.srsc.extra;
 
 import pt.unl.fct.srsc.common.Utils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.rmi.CORBA.Util;
+import javax.swing.text.DateFormatter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Scanner;
 
 public class VoucherMinter {
@@ -58,6 +65,130 @@ public class VoucherMinter {
 
 
     static public void main(String []args ) throws Exception {
+        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e650595f.voucher");
+        System.out.println(verifyVoucher(Files.readAllBytes(file.toPath())));
+
+    }
+
+    public static boolean verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException {
+        Properties properties = new Properties();
+        try {
+            properties.load(new ByteArrayInputStream(voucher));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//        String coinName = properties.getProperty("CoinName");
+//        String coinIssuer = properties.getProperty("CoinIssuer");
+        String coinValue = properties.getProperty("CoinValue");
+        String rawDate = properties.getProperty("ExpireDate");
+        DateFormat dateFormat = new SimpleDateFormat("E MMM dd HH:mm:ss z yyyy");
+        Date expireDate = dateFormat.parse(rawDate);
+        String coinPublicKey = properties.getProperty("CoinPublicKey");
+        String coinAuthenticity = properties.getProperty("CoinAuthenticity");
+        String issuerSignature = properties.getProperty("IssuerSignature");
+        String issuerPublicKey = properties.getProperty("IssuerPublicKey");
+        String proof1 = properties.getProperty("IntegrityProof1");
+        String proof2 = properties.getProperty("IntegrityProof2");
+
+
+        ByteArrayOutputStream toVerify = new ByteArrayOutputStream();
+        ByteArrayInputStream is = new ByteArrayInputStream(voucher);
+        BufferedReader bfReader = new BufferedReader(new InputStreamReader(is));
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+
+        MessageDigest   hash = null;
+        try {
+            hash = MessageDigest.getInstance(SHA_256, BC);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            hash = MessageDigest.getInstance(SHA_256);
+        }
+
+        assert hash != null;
+        hash.update(toVerify.toByteArray());
+        sha256 = hash.digest();
+        if (!MessageDigest.isEqual(sha256, Utils.decodeHexString(proof1)))
+            return false;
+        System.out.println("SHA256 ok");
+
+        try {
+            hash = MessageDigest.getInstance(RIPEMD_256, BC);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            hash = MessageDigest.getInstance(RIPEMD_256);
+            e.printStackTrace();
+        }
+
+        assert hash != null;
+        hash.update(toVerify.toByteArray());
+        ripemd256 = hash.digest();
+        if (!MessageDigest.isEqual(ripemd256, Utils.decodeHexString(proof2)))
+            return false;
+        System.out.println("RIPEMD ok");
+
+
+        toVerify = new ByteArrayOutputStream();
+        is = new ByteArrayInputStream(voucher);
+        bfReader = new BufferedReader(new InputStreamReader(is));
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+
+
+        Signature ecdsaVerify = Signature.getInstance("SHA512WITHECDSA", "BC");
+        byte[] byteKey = Utils.decodeHexString(coinPublicKey);
+        X509EncodedKeySpec X509publicKey = new X509EncodedKeySpec(byteKey);
+        KeyFactory kf = KeyFactory.getInstance("EC", "BC");
+        PublicKey publicKey = kf.generatePublic(X509publicKey);
+        ecdsaVerify.initVerify(publicKey);
+        ecdsaVerify.update(toVerify.toByteArray());
+        boolean result = ecdsaVerify.verify(Utils.decodeHexString(coinAuthenticity));
+        if (!result)
+            return false;
+
+        toVerify.write(bfReader.readLine().getBytes());
+        toVerify.write(NEWLINE);
+
+
+        ecdsaVerify = Signature.getInstance("SHA512WITHECDSA", "BC");
+        byteKey = Utils.decodeHexString(issuerPublicKey);
+        X509publicKey = new X509EncodedKeySpec(byteKey);
+        kf = KeyFactory.getInstance("EC", "BC");
+        publicKey = kf.generatePublic(X509publicKey);
+        ecdsaVerify.initVerify(publicKey);
+        ecdsaVerify.update(toVerify.toByteArray());
+        result = ecdsaVerify.verify(Utils.decodeHexString(issuerSignature));
+        if (!result)
+            return false;
+        return true;
+    }
+
+    private static void mintVoucher() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, InvalidKeyException, SignatureException {
         getInfoFromConsole();
         calculateDateAhead();
         getIssuerKeys();
