@@ -2,11 +2,8 @@ package pt.unl.fct.srsc.extra;
 
 import pt.unl.fct.srsc.common.Utils;
 
-import javax.rmi.CORBA.Util;
-import javax.swing.text.DateFormatter;
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -60,17 +57,15 @@ public class VoucherMinter {
     private static ByteArrayOutputStream baos;
     private static String sigBytes;
     private static String issuerSigBytes;
-    private static byte[] sha256 = null;
-    private static byte[] ripemd256 = null;
 
 
     static public void main(String []args ) throws Exception {
-        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e650595f.voucher");
+        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e628e31d.voucher");
         System.out.println(verifyVoucher(Files.readAllBytes(file.toPath())));
-
+//    mintVoucher();
     }
 
-    public static boolean verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException {
+    public static int verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException {
         Properties properties = new Properties();
         try {
             properties.load(new ByteArrayInputStream(voucher));
@@ -112,36 +107,16 @@ public class VoucherMinter {
         toVerify.write(bfReader.readLine().getBytes());
         toVerify.write(NEWLINE);
 
-        MessageDigest   hash = null;
-        try {
-            hash = MessageDigest.getInstance(SHA_256, BC);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            hash = MessageDigest.getInstance(SHA_256);
-        }
 
-        assert hash != null;
-        hash.update(toVerify.toByteArray());
-        sha256 = hash.digest();
-        if (!MessageDigest.isEqual(sha256, Utils.decodeHexString(proof1)))
-            return false;
+
+
+
+        if (!MessageDigest.isEqual(md5Hash(toVerify.toByteArray()), Utils.decodeHexString(proof1)))
+            return 0;
         System.out.println("SHA256 ok");
 
-        try {
-            hash = MessageDigest.getInstance(RIPEMD_256, BC);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            hash = MessageDigest.getInstance(RIPEMD_256);
-            e.printStackTrace();
-        }
-
-        assert hash != null;
-        hash.update(toVerify.toByteArray());
-        ripemd256 = hash.digest();
-        if (!MessageDigest.isEqual(ripemd256, Utils.decodeHexString(proof2)))
-            return false;
+        if (!MessageDigest.isEqual(ripemdHash(toVerify.toByteArray()), Utils.decodeHexString(proof2)))
+            return 0;
         System.out.println("RIPEMD ok");
 
 
@@ -169,7 +144,7 @@ public class VoucherMinter {
         ecdsaVerify.update(toVerify.toByteArray());
         boolean result = ecdsaVerify.verify(Utils.decodeHexString(coinAuthenticity));
         if (!result)
-            return false;
+            return 0;
 
         toVerify.write(bfReader.readLine().getBytes());
         toVerify.write(NEWLINE);
@@ -184,8 +159,10 @@ public class VoucherMinter {
         ecdsaVerify.update(toVerify.toByteArray());
         result = ecdsaVerify.verify(Utils.decodeHexString(issuerSignature));
         if (!result)
-            return false;
-        return true;
+            return 0;
+        if (expireDate.getTime() < (new Date().getTime()))
+            return 0;
+        return Integer.parseInt(coinValue);
     }
 
     private static void mintVoucher() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException, InvalidKeyException, SignatureException {
@@ -214,11 +191,11 @@ public class VoucherMinter {
         baos.write((ISSUER_PUB_KEY + Utils.encodeHexString(issuerKp.getPublic().getEncoded())).getBytes());
         baos.write(NEWLINE);
         // both hash all the above
-        md5Hash();
-        calculateRipemd();
-        baos.write((INT_PROOF_1 + Utils.encodeHexString(sha256)).getBytes());
+        byte[] md5Hash = md5Hash(baos.toByteArray());
+        byte[] ripemdHash = ripemdHash(baos.toByteArray());
+        baos.write((INT_PROOF_1 + Utils.encodeHexString(md5Hash)).getBytes());
         baos.write(NEWLINE);
-        baos.write((INT_PROOF_2 + Utils.encodeHexString(ripemd256)).getBytes());
+        baos.write((INT_PROOF_2 + Utils.encodeHexString(ripemdHash)).getBytes());
         saveVoucher();
     }
 
@@ -228,7 +205,7 @@ public class VoucherMinter {
         baos.writeTo(new FileOutputStream(VOUCHER_PATH + sigBytes.substring(0, 15) + VOUCHER_EXTENSION));
     }
 
-    private static void calculateRipemd() throws NoSuchAlgorithmException {
+    private static byte[] ripemdHash(byte[] input) throws NoSuchAlgorithmException {
         System.out.print(HASHING_WITH_RIPMD_256);
         MessageDigest hash = null;
         try {
@@ -241,12 +218,13 @@ public class VoucherMinter {
         }
 
         assert hash != null;
-        hash.update(baos.toByteArray());
-        ripemd256 = hash.digest();
+        hash.update(input);
+        byte[] ripemd256 = hash.digest();
         System.out.println(DONE);
+        return ripemd256;
     }
 
-    private static void md5Hash() throws NoSuchAlgorithmException {
+    private static byte[] md5Hash(byte[] input) throws NoSuchAlgorithmException {
         System.out.print(HASHING_WITH_SHA_256);
         MessageDigest   hash = null;
         try {
@@ -258,9 +236,10 @@ public class VoucherMinter {
         }
 
         assert hash != null;
-        hash.update(baos.toByteArray());
-        sha256 = hash.digest();
+        hash.update(input);
+        byte[] sha256 = hash.digest();
         System.out.println(DONE);
+        return sha256;
     }
 
     private static void issuerSign() throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
