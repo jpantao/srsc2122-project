@@ -20,37 +20,37 @@ import java.util.logging.Logger;
 
 public class VoucherMinter {
 
-    public static final String COIN_NAME = "CoinName=Movie Voucher Inc.";
-    public static final String COIN_ISSUER = "CoinIssuer=MEGAMOVIES";
-    public static final String COIN_VAlUES = "CoinValue=";
-    public static final String EXPIRE_DATE = "ExpireDate=";
-    public static final String COIN_PUB_KEY = "CoinPublicKey=";
-    public static final String COIN_AUTH = "CoinAuthenticity=";
-    public static final String ISSUER_SIG = "IssuerSignature=";
-    public static final String ISSUER_PUB_KEY = "IssuerPublicKey=";
-    public static final String INT_PROOF_1 = "IntegrityProof1=";
-    public static final String INT_PROOF_2 = "IntegrityProof2=";
-    public static final int NEWLINE = 10;
-    public static final String VOUCHER_PATH = "pt/unl/fct/srsc/extra/coin_";
-    public static final String VOUCHER_EXTENSION = ".voucher";
-    public static final String PROVIDER = "BC";
-    public static final String SHA_512_WITH_ECDSA = "SHA512withECDSA";
-    public static final String KEYSTORE_PATH = "pt/unl/fct/srsc/common/this.keystore";
-    public static final String SRSC_2122 = "srsc2122";
-    public static final String COINISSUER = "coinissuer";
-    public static final String VOUCHER_MINTER = "----------- VOUCHER MINTER -----------";
-    public static final String HORIZONTAL_LINE = "--------------------------------------";
-    public static final String ASK_VALUE = "Insert value (default = 1): ";
-    public static final String ASK_DAYS = "Insert expire in days (default = 365): ";
-    public static final String GENERATING_COIN_S_PRIVATE_KEY = "Generating coin's private key....";
-    public static final String SIG_ALGO = "SHA512WITHECDSA";
-    public static final String PROOF1_ALGO = "SHA256";
-    public static final String PROOF2_ALGO = "RIPEMD256";
-    public static final String SHA_256_OK = "SHA256 ok";
-    public static final String RIPEMD_OK = "RIPEMD ok";
-    public static final String EC = "EC";
-    private static String fileFingerPrint;
+    private static final String COIN_NAME = "CoinName=Movie Voucher Inc.";
+    private static final String COIN_ISSUER = "CoinIssuer=MEGAMOVIES";
+    private static final String COIN_VAlUES = "CoinValue=";
+    private static final String EXPIRE_DATE = "ExpireDate=";
+    private static final String COIN_PUB_KEY = "CoinPublicKey=";
+    private static final String COIN_AUTH = "CoinAuthenticity=";
+    private static final String ISSUER_SIG = "IssuerSignature=";
+    private static final String ISSUER_PUB_KEY = "IssuerPublicKey=";
+    private static final String INT_PROOF_1 = "IntegrityProof1=";
+    private static final String INT_PROOF_2 = "IntegrityProof2=";
+    private static final String VOUCHER_PATH = "pt/unl/fct/srsc/extra/coin_";
+    private static final String VOUCHER_EXTENSION = ".voucher";
+    private static final String PROVIDER = "BC";
+    private static final String SHA_512_WITH_ECDSA = "SHA512withECDSA";
+    private static final String KEYSTORE_PATH = "pt/unl/fct/srsc/common/this.keystore";
+    private static final String SRSC_2122 = "srsc2122";
+    private static final String COINISSUER = "coinissuer";
+    private static final String VOUCHER_MINTER = "----------- VOUCHER MINTER -----------";
+    private static final String HORIZONTAL_LINE = "--------------------------------------";
+    private static final String ASK_VALUE = "Insert value (default = 1): ";
+    private static final String ASK_DAYS = "Insert expire in days (default = 365): ";
+    private static final String GENERATING_COIN_S_PRIVATE_KEY = "Generating coin's private key....";
+    private static final String SIG_ALGO = "SHA512WITHECDSA";
+    private static final String PROOF1_ALGO = "SHA256";
+    private static final String PROOF2_ALGO = "RIPEMD256";
+    private static final String SHA_256_OK = "SHA256 ok";
+    private static final String RIPEMD_OK = "RIPEMD ok";
+    private static final String EC = "EC";
     private static final Logger LOGGER = Logger.getLogger(VoucherMinter.class.getName());
+    private static final int NEWLINE = 10;
+    private static String fileFingerPrint;
 
 
     static public void main(String []args ) throws Exception {
