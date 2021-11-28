@@ -35,6 +35,7 @@ class hjStreamServer {
 		long q0 = 0;
 
 		while ( g.available() > 0 ) {
+//			size = 40;
 			size = g.readShort();
 			time = g.readLong();
 			if ( count == 0 ) q0 = time; // tempo de referencia no stream
