@@ -1,18 +1,20 @@
 package sapkdp;
 
 import common.Utils;
-import sapkdp.messages.HeaderSAPKDP;
-import sapkdp.messages.PlainMsgSAPKDP;
-import sapkdp.messages.PlainPBHello;
+import sapkdp.messages.*;
 
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientSAPKDP {
 
@@ -30,12 +32,23 @@ public class ClientSAPKDP {
     private final KeyPair keyPair;
     private final String pboxID;
     private final String userID;
+    private final String userPW;
     private final String sigserverAddr;
+    private final Properties properties;
+    private final Mac mac;
 
-    public ClientSAPKDP(String pboxID, String userID, String keystoreFile, char[] storepass, String sigserverAddr) {
+    public ClientSAPKDP(String pboxID, String userID, String keystoreFile, char[] storepass, String userPW, String sigserverAddr) {
         this.sigserverAddr = sigserverAddr;
         this.pboxID = pboxID;
         this.userID = userID;
+        this.userPW = userPW;
+
+        Utils.loadBC();
+
+        properties = Utils.loadConfig(CONFIG_FILE);
+        String macSuite = properties.getProperty("mac-ciphersuite");
+        byte[] macKeyBytes = Utils.decodeHexString(properties.getProperty("mac-keybytes"));
+        mac = Utils.getHMAC(macSuite, macKeyBytes, macSuite);
 
         // load keypair from keystore
         keyPair = Utils.getKeyPair(keystoreFile, storepass, PROXYBOX_ALIAS);
@@ -48,56 +61,66 @@ public class ClientSAPKDP {
     }
 
 
-
-    public void handshake() {
+    public void handshake(String movieID) {
         String[] addr = sigserverAddr.split(":");
-        try (Socket sock = new Socket(addr[0], Integer.parseInt(addr[1])) ){
+        try (Socket sock = new Socket(addr[0], Integer.parseInt(addr[1]))) {
             DataInputStream in = new DataInputStream(sock.getInputStream());
             DataOutputStream out = new DataOutputStream(sock.getOutputStream());
+            String dsaSuite = properties.getProperty("dsa-ciphersuite");
+            String provider = properties.getProperty("provider");
 
+            int msgType;
             byte[] payload;
 
-            //TODO: (round 1)
+            // (round 1)
             PlainPBHello hello = new PlainPBHello(userID, pboxID);
             payload = PlainMsgSAPKDP.serialize(hello);
-            sendWithHeader(out, hello.getType(), payload);
+            Utils.sendWithHeader(out, VERSION, hello.getType(), payload);
             Utils.logSent(hello);
 
-            //TODO: (round 2)
-            //TODO: (round 3)
-            //TODO: (round 4)
+            // (round 2)
+            msgType = PlainMsgSAPKDP.Type.SS_AUTHREQ.msgType;
+            payload = Utils.readConsumingHeader(in, msgType);
+            PlainSSAuthReq authReq = (PlainSSAuthReq) PlainMsgSAPKDP.deserialize(msgType, payload);
+            Utils.logReceived(authReq);
+
+            // (round 3)
+            PlainPBAuth auth = genPlainAuth(authReq, movieID);
+            payload = encryptAuth(auth, authReq.getSalt(), authReq.getCounter(), userPW);
+            Utils.sendWithHeader(out, VERSION, auth.getType(), payload);
+            Utils.sendIntCheck(out, mac, payload);
+            Utils.logSent(auth);
+
+            // (round 4)
+            msgType = PlainMsgSAPKDP.Type.SS_PAYREQ.msgType;
+            payload = Utils.readConsumingHeader(in, msgType);
+            byte[] sigBytes = Utils.readSig(in);
+            Utils.readVerifyingIntCheck(in, mac, payload);
+            if (!Utils.verifySig(dsaSuite,provider,keyring.get(SIGSERVER_ALIAS),payload, sigBytes))
+                throw new Exception("Signature for payment request could not be verified");
+            PlainSSPaymentReq paymentReq = (PlainSSPaymentReq) PlainMsgSAPKDP.deserialize(msgType, payload);
+            Utils.logReceived(paymentReq);
+
             //TODO: (round 5)
             //TODO: (round 6)
-
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    private static void sendWithHeader(DataOutputStream out, PlainMsgSAPKDP.Type type, byte[] payload) throws IOException {
-        HeaderSAPKDP header = new HeaderSAPKDP(VERSION, type.msgType, (short) payload.length);
-        out.write(header.encode());
-        out.write(payload);
+
+    private PlainPBAuth genPlainAuth(PlainSSAuthReq req, String movieID) {
+        int n1Prime = req.getNonce() + 1;
+        int n2 = ThreadLocalRandom.current().nextInt();
+        return new PlainPBAuth(n1Prime, n2, movieID);
     }
 
-
-    private boolean rcvAuthReq(DataInputStream in){
-        byte[] headerBytes = new byte[HeaderSAPKDP.BYTE_LEN];
-
-        try {
-            in.read(headerBytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-
-
-        HeaderSAPKDP header= new HeaderSAPKDP(headerBytes);
-
-
-        return true;
+    private byte[] encryptAuth(PlainPBAuth auth, byte[] salt, int counter, String password) throws IOException {
+        String ciphersuite = this.properties.getProperty("pbe-ciphersuite");
+        String provider = this.properties.getProperty("provider");
+        byte[] plaintext = PlainMsgSAPKDP.serialize(auth);
+        return Utils.pbeCipher(Cipher.ENCRYPT_MODE, password, ciphersuite, provider, salt, counter, plaintext);
     }
 
 

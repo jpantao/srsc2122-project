@@ -76,8 +76,8 @@ class ProxyBox {
         String proxyBoxID = properties.getProperty("proxyBoxID");
 
         //TODO: SAPKDP
-        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, sigserver);
-        clientSAPKDP.handshake();
+        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+        clientSAPKDP.handshake("cars");
 
 
         //TODO: SRTSP

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class SignalingServer {
 
-    public static final String CONFIG = "config/sigserver.properties";
+    public static final String CONFIG_FILE = "config/sigserver.properties";
     public static final String KEYSTORE_FILE = "keystores/this.keystore";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
@@ -27,12 +27,13 @@ public class SignalingServer {
 
     static {
         try {
+            Utils.loadBC();
             users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
             movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
             Utils.loadBC();
-            properties = Utils.loadConfig(CONFIG);
+            properties = Utils.loadConfig(CONFIG_FILE);
             serverSAPKDP = ServerSAPKDP.getInstance();
-            serverSAPKDP.load(KEYSTORE_FILE, KEYSTORE_PASS);
+            serverSAPKDP.load(KEYSTORE_FILE, KEYSTORE_PASS, users, movies);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -52,7 +53,7 @@ public class SignalingServer {
                 System.out.println("New client connected: " + client.getInetAddress().getHostAddress());
 
                 // launch handler
-                new Thread(() -> serverSAPKDP.handleHanshake(client)).start();
+                new Thread(() -> serverSAPKDP.handleHandshake(client)).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
