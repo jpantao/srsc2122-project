@@ -156,8 +156,6 @@ public class SecureDatagramSocket extends DatagramSocket {
         else
             dos.write(hMac.doFinal(), 0, hMac.getMacLength());
         dos.flush();
-//        System.out.printf("Original plaintext size: %d, hexBytes: %s\n", datagramPacket.getLength(), Utils.encodeHexString(datagramPacket.getData()));
-//        System.out.printf("Sent Ciphertext size: %d, hexBytes: %s\n", ctLength, Utils.encodeHexString(cipherText));
         datagramPacket.setData(baos.toByteArray(), 0, baos.size());
         super.send(datagramPacket);
         dos.close();
@@ -190,6 +188,7 @@ public class SecureDatagramSocket extends DatagramSocket {
             byte[] messageHash = new byte[hMac.getMacLength()];
             System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);
 
+            datagramPacket.getData()[59] = 4;
             try {
                 hMac.init(hMacKey);
             } catch (InvalidKeyException e) {
@@ -205,7 +204,6 @@ public class SecureDatagramSocket extends DatagramSocket {
         }
 
 
-
         int ptLength = 0;
         byte[] plainText = new byte[cipher.getOutputSize(payloadSize)];
 
@@ -217,12 +215,12 @@ public class SecureDatagramSocket extends DatagramSocket {
 //            ptLength = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength(), plainText, 0);
             ptLength = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize, plainText, 0);
 
+        } catch (AEADBadTagException e) {
+            System.out.println("Integrity check failed");
+//                TODO DROP PACKET?
         } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
             e.printStackTrace();
         }
-
-//        System.out.printf("Received Ciphertext size: %d, hexBytes: %s\n", payloadSize, Utils.encodeHexString(Arrays.copyOfRange(datagramPacket.getData(), HEADER_SIZE, payloadSize)));
-//        System.out.printf("Original plaintext size: %d, hexBytes: %s\n", ptLength, Utils.encodeHexString(plainText));
         datagramPacket.setData(plainText, 0, ptLength);
 
     }
