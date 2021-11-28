@@ -1,18 +1,18 @@
 package pt.unl.fct.srsc.proxy;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+
+
+
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.util.Properties;
 
 public class Handshake {
     private final InetSocketAddress inSocketAddress;
     private final InetSocketAddress outSocketAddress;
+    private static final int VERSION = 1;
 
     public Handshake() throws IOException {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
@@ -29,12 +29,13 @@ public class Handshake {
     }
 
     public void start() throws IOException {
-        byte[] buff = new byte[4 * 1024];
-        DatagramPacket outPacket = new DatagramPacket(buff, buff.length, outSocketAddress );
+        byte[] inBuffer = new byte[4 * 1024];
+        DatagramPacket inPacket = new DatagramPacket(inBuffer, inBuffer.length);
         DatagramSocket inSocket = new DatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
-        outPacket.setData(new byte[] {0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 });
-        outSocket.send(outPacket);
+        outSocket.send(round1Packet());
+        inSocket.receive(inPacket);
+        outSocket.send(round3Packet());
 
     }
 
@@ -44,4 +45,47 @@ public class Handshake {
         int port = Integer.parseInt(split[1]);
         return new InetSocketAddress(host, port);
     }
+
+
+    private DatagramPacket round1Packet() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+
+
+
+
+        DatagramPacket datagramPacket = makePacket(baos.toByteArray(), 1);
+        dos.close();
+        baos.close();
+        return datagramPacket;
+    }
+
+    private DatagramPacket round3Packet() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+
+
+
+
+        DatagramPacket datagramPacket = makePacket(baos.toByteArray(), 3);
+        dos.close();
+        baos.close();
+        return datagramPacket;
+    }
+    private DatagramPacket makePacket(byte[] data, int msgType) throws IOException {
+        byte[] outBuffer = new byte[4 * 1024];
+        DatagramPacket outPacket = new DatagramPacket(outBuffer, outBuffer.length, outSocketAddress );
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        baos.write(VERSION);
+        baos.write(msgType);
+        baos.write(data);
+        baos.flush();
+        outPacket.setData(baos.toByteArray(), 0, baos.size());
+        dos.close();
+        baos.close();
+        return outPacket;
+    }
+
+
 }
