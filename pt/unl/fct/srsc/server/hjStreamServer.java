@@ -27,7 +27,9 @@ class hjStreamServer {
 		DataInputStream g = new DataInputStream( new FileInputStream(args[0]) );
 		byte[] buff = new byte[4096];
 
-		// Changed HERE
+		Handshake handShake = new Handshake();
+		handShake.go();
+
 		SecureDatagramSocket s = new SecureDatagramSocket();
 		InetSocketAddress addr = new InetSocketAddress( args[1], Integer.parseInt(args[2]));
 		DatagramPacket p = new DatagramPacket(buff, buff.length, addr );
@@ -35,7 +37,6 @@ class hjStreamServer {
 		long q0 = 0;
 
 		while ( g.available() > 0 ) {
-//			size = 40;
 			size = g.readShort();
 			time = g.readLong();
 			if ( count == 0 ) q0 = time; // tempo de referencia no stream

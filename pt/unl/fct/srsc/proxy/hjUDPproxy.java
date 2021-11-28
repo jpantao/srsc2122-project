@@ -42,11 +42,13 @@ class hjUDPproxy {
         String remote = properties.getProperty("remote");
         String destinations = properties.getProperty("localdelivery");
 
+        Handshake handShake = new Handshake();
+        handShake.start();
+
         SocketAddress inSocketAddress = parseSocketAddress(remote);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
                 s -> parseSocketAddress(s)).collect(Collectors.toSet());
 
-        // Changed HERE
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
         byte[] buffer = new byte[4 * 1024];
