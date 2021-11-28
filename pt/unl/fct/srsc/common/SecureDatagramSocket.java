@@ -16,8 +16,9 @@ import org.bouncycastle.util.Arrays;
 
 public class SecureDatagramSocket extends DatagramSocket {
     private static final SecureRandom random = new SecureRandom();
-    String algorithm;
     public static final int HEADER_SIZE = 5;
+    private boolean noHMAC = false;
+    String algorithm;
     byte[] keyBytes;
     byte[] ivBytes;
     SecretKeySpec key;
@@ -25,7 +26,6 @@ public class SecureDatagramSocket extends DatagramSocket {
     Mac hMac = null;
     Cipher cipher = null;
     Key hMacKey;
-    private boolean noHMAC = false;
 
     public SecureDatagramSocket() throws SocketException {
         super();
@@ -97,8 +97,10 @@ public class SecureDatagramSocket extends DatagramSocket {
             hMacKey = new SecretKeySpec(hmacBytes, hmac);
         }
 
-        ivSpec = new IvParameterSpec(ivBytes);
-        initCipher(opmode, algorithm, ivSpec);
+        if (!noHMAC) {
+            ivSpec = new IvParameterSpec(ivBytes);
+            initCipher(opmode, algorithm, ivSpec);
+        }
 
     }
 
@@ -119,11 +121,8 @@ public class SecureDatagramSocket extends DatagramSocket {
 
     @Override
     public void send(DatagramPacket datagramPacket) throws IOException {
-
         byte[] cipherText = new byte[cipher.getOutputSize(datagramPacket.getLength())];
-
         int ctLength = 0;
-
         try {
             if (noHMAC) {
                 ivSpec = Utils.createCtrIvForAES(random.nextInt(), random);
@@ -170,16 +169,15 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
         DataInputStream dis = new DataInputStream(bais);
-//
+
         byte firstByte = dis.readByte();
 //        TODO v2
 //        firstHalfByte =
 //        secondHalfByte =
         int payloadSize = dis.readInt();
-//
+
         dis.close();
         bais.close();
-//
 
         if (noHMAC) {
             ivBytes = new byte[16];
@@ -212,9 +210,7 @@ public class SecureDatagramSocket extends DatagramSocket {
                 ivSpec = new IvParameterSpec(ivBytes);
                 initCipher(Cipher.DECRYPT_MODE, algorithm, ivSpec);
             }
-//            ptLength = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength(), plainText, 0);
             ptLength = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize, plainText, 0);
-
         } catch (AEADBadTagException e) {
             System.out.println("Integrity check failed");
 //                TODO DROP PACKET?

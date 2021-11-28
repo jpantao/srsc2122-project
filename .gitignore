@@ -4,3 +4,4 @@ target/
 *.class
 *.voucher
 out/
+/.attach*
