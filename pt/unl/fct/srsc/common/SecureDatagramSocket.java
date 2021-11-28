@@ -11,7 +11,6 @@ import java.net.SocketException;
 import java.security.*;
 import java.util.Properties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.util.Arrays;
 
 
 public class SecureDatagramSocket extends DatagramSocket {
@@ -97,10 +96,8 @@ public class SecureDatagramSocket extends DatagramSocket {
             hMacKey = new SecretKeySpec(hmacBytes, hmac);
         }
 
-        if (!noHMAC) {
-            ivSpec = new IvParameterSpec(ivBytes);
-            initCipher(opmode, algorithm, ivSpec);
-        }
+        ivSpec = new IvParameterSpec(ivBytes);
+        initCipher(opmode, algorithm, ivSpec);
 
     }
 
@@ -166,6 +163,7 @@ public class SecureDatagramSocket extends DatagramSocket {
     @Override
     public synchronized void receive(DatagramPacket datagramPacket) throws IOException {
         super.receive(datagramPacket);
+        boolean drop = false;
 
         ByteArrayInputStream bais = new ByteArrayInputStream(datagramPacket.getData());
         DataInputStream dis = new DataInputStream(bais);
@@ -179,6 +177,7 @@ public class SecureDatagramSocket extends DatagramSocket {
         dis.close();
         bais.close();
 
+//        datagramPacket.getData()[59] = 4;
         if (noHMAC) {
             ivBytes = new byte[16];
             System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, ivBytes, 0, ivBytes.length);
@@ -186,7 +185,6 @@ public class SecureDatagramSocket extends DatagramSocket {
             byte[] messageHash = new byte[hMac.getMacLength()];
             System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);
 
-//            datagramPacket.getData()[59] = 4;
             try {
                 hMac.init(hMacKey);
             } catch (InvalidKeyException e) {
@@ -196,28 +194,30 @@ public class SecureDatagramSocket extends DatagramSocket {
 
 
             if (!MessageDigest.isEqual(hMac.doFinal(), messageHash)) {
+                drop = true;
+            }
+        }
+
+
+        if (!drop) {
+            int ptLength = 0;
+            byte[] plainText = new byte[cipher.getOutputSize(payloadSize)];
+
+            try {
+                if (noHMAC) {
+                    ivSpec = new IvParameterSpec(ivBytes);
+                    initCipher(Cipher.DECRYPT_MODE, algorithm, ivSpec);
+                }
+                ptLength = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize, plainText, 0);
+                datagramPacket.setData(plainText, 0, ptLength);
+            } catch (AEADBadTagException e) {
                 System.out.println("Integrity check failed");
-//                TODO DROP PACKET?
+                datagramPacket.setData(plainText, 0, 0);
+            } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
+                e.printStackTrace();
             }
+        } else {
+            datagramPacket.setData(datagramPacket.getData(), 0, 0);
         }
-
-
-        int ptLength = 0;
-        byte[] plainText = new byte[cipher.getOutputSize(payloadSize)];
-
-        try {
-            if (noHMAC) {
-                ivSpec = new IvParameterSpec(ivBytes);
-                initCipher(Cipher.DECRYPT_MODE, algorithm, ivSpec);
-            }
-            ptLength = cipher.doFinal(datagramPacket.getData(), HEADER_SIZE, payloadSize, plainText, 0);
-        } catch (AEADBadTagException e) {
-            System.out.println("Integrity check failed");
-//                TODO DROP PACKET?
-        } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
-            e.printStackTrace();
-        }
-        datagramPacket.setData(plainText, 0, ptLength);
-
     }
 }
