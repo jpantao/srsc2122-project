@@ -188,7 +188,7 @@ public class SecureDatagramSocket extends DatagramSocket {
             byte[] messageHash = new byte[hMac.getMacLength()];
             System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);
 
-            datagramPacket.getData()[59] = 4;
+//            datagramPacket.getData()[59] = 4;
             try {
                 hMac.init(hMacKey);
             } catch (InvalidKeyException e) {
