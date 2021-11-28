@@ -1,11 +1,17 @@
 package common;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import sapkdp.messages.HeaderSAPKDP;
+import sapkdp.messages.PlainMsgSAPKDP;
+
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SecureRandom;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.*;
+import java.util.*;
 
 /**
  * Utilities
@@ -169,4 +175,64 @@ public class Utils
         }
         return hexStringBuffer.toString();
     }
+
+    public static Properties loadConfig(String configFile) throws IOException {
+        InputStream inputStream = new FileInputStream(configFile);
+        Properties properties = new Properties();
+        properties.load(inputStream);
+        return properties;
+    }
+
+    public static void loadBC() {
+        Provider provider = Security.getProvider("BC");
+        if (provider == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
+    public static KeyPair getKeyPair(String keystoreFile, char[] storepass, String keyalias) {
+        KeyPair kp = null;
+        try {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(keystoreFile), storepass);
+
+            Key k = ks.getKey(keyalias, storepass);
+            if (k instanceof PrivateKey)
+                kp = new KeyPair(ks.getCertificate(keyalias).getPublicKey(), (PrivateKey) k);
+            else
+                throw new Exception("Private key for " + keyalias + "not found in " + keystoreFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return kp;
+    }
+
+    public static PublicKey getPubKey(String keystoreFile, char[] storepass, String alias) {
+        PublicKey pubKey = null;
+        try {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(keystoreFile), storepass);
+
+            Key k = ks.getKey(alias, storepass);
+            if (k instanceof PrivateKey)
+                pubKey = ks.getCertificate(alias).getPublicKey();
+            else
+                throw new Exception("Private key for " + alias + "not found in " + keystoreFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return pubKey;
+    }
+
+    public static void logSent(PlainMsgSAPKDP msg) {
+        System.out.println("[SENT] " + msg);
+    }
+
+    public static void logReceived(PlainMsgSAPKDP msg) {
+        System.out.println("[RECV] " + msg);
+    }
+
+
 }

@@ -2,13 +2,15 @@ package proxybox;
 
 import common.SecureDatagramSocket;
 import common.Utils;
-import sigserver.sapkdp.ProtoSAPKDP;
+import sapkdp.ClientSAPKDP;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.io.*;
-import java.net.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
@@ -16,16 +18,12 @@ import java.util.stream.Collectors;
 
 class ProxyBox {
 
-    public static final String KEYSTORE = "resources/this.keystore";
-    public static final String PROXYBOX_KEYALIAS = "proxybox";
-    public static final String SIGSERVER_KEYALIAS = "signalingserver";
-
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
-
 
     private static String username;
     private static String password;
     private static String keystore;
+    private static char[] storepass;
     private static String proxyinfo;
 
 
@@ -49,9 +47,15 @@ class ProxyBox {
                 case "-proxyinfo":
                     proxyinfo = args[++i];
                     break;
+                case "-storepass":
+                    storepass = args[++i].toCharArray();
+                    break;
                 default:
                     System.err.println("Unknown option");
             }
+        if (storepass == null)
+            storepass = KEYSTORE_PASS;
+
     }
 
 
@@ -65,24 +69,16 @@ class ProxyBox {
     public static void main(String[] args) throws Exception {
         argparse(args);
 
-        InputStream inputStream = new FileInputStream(proxyinfo);
-        Properties properties = new Properties();
-        properties.load(inputStream);
+        Properties properties = Utils.loadConfig(proxyinfo);
         String strserver = properties.getProperty("strserver");
         String mpegplayers = properties.getProperty("mpegplayers");
         String sigserver = properties.getProperty("sigserver");
         String proxyBoxID = properties.getProperty("proxyBoxID");
 
-        // SAPKDP
-        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-        ks.load(new FileInputStream(KEYSTORE), KEYSTORE_PASS);
+        //TODO: SAPKDP
+        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, sigserver);
+        clientSAPKDP.handshake();
 
-        //TODO: use truststores instead of having all the keypairs in on keystores
-        PrivateKey prvkey = (PrivateKey) ks.getKey(PROXYBOX_KEYALIAS, KEYSTORE_PASS);
-        PublicKey pubkey = ks.getCertificate(SIGSERVER_KEYALIAS).getPublicKey();
-
-        ProtoSAPKDP sapkdp = new ProtoSAPKDP(proxyBoxID, username, password, sigserver, prvkey, pubkey);
-        sapkdp.handshake("cars");
 
         //TODO: SRTSP
 
