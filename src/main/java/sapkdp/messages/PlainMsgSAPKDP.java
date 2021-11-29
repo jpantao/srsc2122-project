@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.sapkdp.messages;
+package sapkdp.messages;
 
 
 import java.io.DataInputStream;

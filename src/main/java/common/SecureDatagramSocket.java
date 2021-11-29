@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.common;
+package common;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;

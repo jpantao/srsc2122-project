@@ -1,10 +1,9 @@
-package pt.unl.fct.srsc.proxy;
+package proxy;
 
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.security.SecureRandom;
 import java.util.Properties;
 

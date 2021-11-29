@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.proxy;
+package proxy;
 
 /* hjUDPproxy, 20/Mar/18
  *
@@ -17,12 +17,10 @@ package pt.unl.fct.srsc.proxy;
  *       Both configurable in the file config.properties
  */
 
-import pt.unl.fct.srsc.common.SecureDatagramSocket;
-import pt.unl.fct.srsc.common.Utils;
-import pt.unl.fct.srsc.sapkdp.ClientSAPKDP;
+import common.SecureDatagramSocket;
+import common.Utils;
+import sapkdp.ClientSAPKDP;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;

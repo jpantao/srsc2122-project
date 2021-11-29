@@ -1,10 +1,9 @@
-package pt.unl.fct.srsc.sapkdp.messages;
+package sapkdp.messages;
 
 
 import common.Utils;
 
 import java.io.*;
-import java.util.Arrays;
 
 public class PlainPBPayment extends PlainMsgSAPKDP {
 

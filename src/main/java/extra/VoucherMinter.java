@@ -1,6 +1,6 @@
-package pt.unl.fct.srsc.extra;
+package extra;
 
-import pt.unl.fct.srsc.common.Utils;
+import common.Utils;
 
 import java.io.*;
 import java.nio.file.Files;

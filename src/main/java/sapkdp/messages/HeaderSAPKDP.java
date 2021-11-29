@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.sapkdp.messages;
+package sapkdp.messages;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

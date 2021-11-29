@@ -1,4 +1,4 @@
-package pt.unl.fct.srsc.server;
+package server;
 
 /*
 * hjStreamServer.java 
@@ -6,7 +6,7 @@ package pt.unl.fct.srsc.server;
 * for clients to play in real time the transmitted movies
 */
 
-import pt.unl.fct.srsc.common.SecureDatagramSocket;
+import common.SecureDatagramSocket;
 
 import java.io.*;
 import java.net.*;

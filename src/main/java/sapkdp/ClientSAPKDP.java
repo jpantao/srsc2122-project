@@ -1,8 +1,8 @@
-package pt.unl.fct.srsc.sapkdp;
+package sapkdp;
 
 
-import pt.unl.fct.srsc.common.Utils;
-import pt.unl.fct.srsc.sapkdp.messages.*;
+import common.Utils;
+import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;

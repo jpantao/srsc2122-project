@@ -1,6 +1,4 @@
-package pt.unl.fct.srsc.server;
-
-import pt.unl.fct.srsc.common.SecureDatagramSocket;
+package server;
 
 import java.io.*;
 import java.net.*;

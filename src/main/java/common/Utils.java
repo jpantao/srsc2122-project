@@ -1,8 +1,8 @@
-package pt.unl.fct.srsc.common;
+package common;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import pt.unl.fct.srsc.sapkdp.messages.HeaderSAPKDP;
-import pt.unl.fct.srsc.sapkdp.messages.PlainMsgSAPKDP;
+import sapkdp.messages.HeaderSAPKDP;
+import sapkdp.messages.PlainMsgSAPKDP;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;

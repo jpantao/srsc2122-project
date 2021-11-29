@@ -1,10 +1,10 @@
-package pt.unl.fct.srsc.sapkdp;
+package sapkdp;
 
 import com.google.gson.JsonObject;
 
-import pt.unl.fct.srsc.common.Utils;
-import pt.unl.fct.srsc.extra.VoucherMinter;
-import pt.unl.fct.srsc.sapkdp.messages.*;
+import common.Utils;
+import extra.VoucherMinter;
+import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;

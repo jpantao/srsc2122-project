@@ -1,10 +1,10 @@
-package pt.unl.fct.srsc.sigserver;
+package sigserver;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import pt.unl.fct.srsc.sapkdp.ServerSAPKDP;
-import pt.unl.fct.srsc.common.Utils;
+import sapkdp.ServerSAPKDP;
+import common.Utils;
 
 
 import java.io.FileReader;
