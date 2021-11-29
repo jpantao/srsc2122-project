@@ -1,4 +1,4 @@
-package proxy;
+package proxybox;
 
 /* hjUDPproxy, 20/Mar/18
  *

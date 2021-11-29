@@ -1,4 +1,4 @@
-package server;
+package streamingserver;
 
 import java.io.*;
 import java.net.*;

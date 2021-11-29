@@ -30,11 +30,11 @@ public class VoucherMinter {
     private static final String ISSUER_PUB_KEY = "IssuerPublicKey=";
     private static final String INT_PROOF_1 = "IntegrityProof1=";
     private static final String INT_PROOF_2 = "IntegrityProof2=";
-    private static final String VOUCHER_PATH = "pt/unl/fct/srsc/extra/coin_";
+    private static final String VOUCHER_PATH = "vouchers/coin_";
     private static final String VOUCHER_EXTENSION = ".voucher";
     private static final String PROVIDER = "BC";
     private static final String SHA_512_WITH_ECDSA = "SHA512withECDSA";
-    private static final String KEYSTORE_PATH = "pt/unl/fct/srsc/common/this.keystore";
+    private static final String KEYSTORE_PATH = "keystores/this.keystore";
     private static final String SRSC_2122 = "srsc2122";
     private static final String COINISSUER = "coinissuer";
     private static final String VOUCHER_MINTER = "----------- VOUCHER MINTER -----------";
@@ -55,9 +55,9 @@ public class VoucherMinter {
 
     static public void main(String []args ) throws Exception {
 
-        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e3c118bf.voucher");
-        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
-//    mintVoucher();
+//        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e3c118bf.voucher");
+//        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
+    mintVoucher();
     }
 
     public static int verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException {

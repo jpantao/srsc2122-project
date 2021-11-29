@@ -1,4 +1,4 @@
-package proxy;
+package proxybox;
 
 import java.io.*;
 import java.net.DatagramPacket;
