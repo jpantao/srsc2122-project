@@ -11,7 +11,7 @@ public class StreamingServerHandshake {
         private static final int VERSION = 1;
 
     public StreamingServerHandshake() throws IOException {
-        InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
+        InputStream inputStream = new FileInputStream("config/proxybox.properties");
         if (inputStream == null) {
             System.err.println("Configuration file not found!");
             System.exit(1);
