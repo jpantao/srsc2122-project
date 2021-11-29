@@ -15,15 +15,15 @@ public class ProxyHandshake {
     private long expectedNonce;
 
     public ProxyHandshake() throws IOException {
-        InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
+        InputStream inputStream = new FileInputStream("config/proxybox.properties");
         if (inputStream == null) {
             System.err.println("Configuration file not found!");
             System.exit(1);
         }
         Properties properties = new Properties();
         properties.load(inputStream);
-        String outAddress = properties.getProperty("streamingserver");
-        String inAddress = properties.getProperty("remote");
+        String outAddress = properties.getProperty("sigserver");
+        String inAddress = properties.getProperty("strserver");
         inSocketAddress = parseSocketAddress(inAddress);
         outSocketAddress = parseSocketAddress(outAddress);
     }

@@ -85,8 +85,8 @@ class hjUDPproxy {
         String proxyBoxID = properties.getProperty("proxyBoxID");
 
         //TODO: SAPKDP
-        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-        clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
+//        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+//        clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
 
 
         ProxyHandshake handShake = new ProxyHandshake();

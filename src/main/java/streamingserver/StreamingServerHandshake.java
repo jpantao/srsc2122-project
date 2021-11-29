@@ -18,8 +18,8 @@ public class StreamingServerHandshake {
         }
         Properties properties = new Properties();
         properties.load(inputStream);
-        String inAddress = properties.getProperty("streamingserver");
-        String outAddress = properties.getProperty("remote");
+        String inAddress = properties.getProperty("sigserver");
+        String outAddress = properties.getProperty("strserver");
         inSocketAddress = parseSocketAddress(inAddress);
         outSocketAddress = parseSocketAddress(outAddress);
     }
