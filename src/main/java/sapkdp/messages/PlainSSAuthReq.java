@@ -6,20 +6,20 @@ import java.util.Arrays;
 
 public class PlainSSAuthReq extends PlainMsgSAPKDP {
 
-    private final int nonce;
+    private final int n1;
     private final byte[] salt;
     private final int counter;
 
-    public PlainSSAuthReq(int nonce, byte[] salt, int counter) {
+    public PlainSSAuthReq(int n1, byte[] salt, int counter) {
         super(Type.SS_AUTHREQ);
-        this.nonce = nonce;
+        this.n1 = n1;
         this.salt = salt;
         this.counter = counter;
     }
 
 
-    public int getNonce() {
-        return nonce;
+    public int getN1() {
+        return n1;
     }
 
     public byte[] getSalt() {
@@ -33,7 +33,7 @@ public class PlainSSAuthReq extends PlainMsgSAPKDP {
     @Override
     public String toString() {
         return "SSAuthenticationRequest{" +
-                "nonce=" + nonce +
+                "n1=" + n1 +
                 ", salt=" + Arrays.toString(salt) +
                 ", counter=" + counter +
                 '}';
@@ -48,7 +48,7 @@ public class PlainSSAuthReq extends PlainMsgSAPKDP {
             DataOutputStream dao = new DataOutputStream(bao);
 
             try {
-                dao.writeInt(msg.nonce);
+                dao.writeInt(msg.n1);
                 dao.writeInt(msg.salt.length);
                 dao.write(msg.salt);
                 dao.writeInt(msg.counter);

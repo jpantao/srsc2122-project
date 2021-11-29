@@ -5,7 +5,6 @@ import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -96,12 +95,17 @@ public class ClientSAPKDP {
             payload = Utils.readConsumingHeader(in, msgType);
             byte[] sigBytes = Utils.readSig(in);
             Utils.readVerifyingIntCheck(in, mac, payload);
-            if (!Utils.verifySig(dsaSuite,provider,keyring.get(SIGSERVER_ALIAS),payload, sigBytes))
+            if (!Utils.verifySig(dsaSuite, provider, keyring.get(SIGSERVER_ALIAS), payload, sigBytes))
                 throw new Exception("Signature for payment request could not be verified");
             PlainSSPaymentReq paymentReq = (PlainSSPaymentReq) PlainMsgSAPKDP.deserialize(msgType, payload);
             Utils.logReceived(paymentReq);
 
+            if (paymentReq.getN2Prime() != auth.getN2() + 1)
+                throw new Exception("n2' != n2+1");
+
             //TODO: (round 5)
+
+
             //TODO: (round 6)
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,7 +115,7 @@ public class ClientSAPKDP {
 
 
     private PlainPBAuth genPlainAuth(PlainSSAuthReq req, String movieID) {
-        int n1Prime = req.getNonce() + 1;
+        int n1Prime = req.getN1() + 1;
         int n2 = ThreadLocalRandom.current().nextInt();
         return new PlainPBAuth(n1Prime, n2, movieID);
     }

@@ -5,24 +5,24 @@ import java.io.*;
 
 public class PlainPBAuth extends PlainMsgSAPKDP {
 
-    private final int nonce1;
-    private final int nonce2;
+    private final int n1Prime;
+    private final int n2;
     private final String movieID;
 
 
-    public PlainPBAuth(int nonce1, int nonce2, String movieID) {
+    public PlainPBAuth(int n1Prime, int n2, String movieID) {
         super(Type.PB_AUTH);
-        this.nonce1 = nonce1;
-        this.nonce2 = nonce2;
+        this.n1Prime = n1Prime;
+        this.n2 = n2;
         this.movieID = movieID;
     }
 
-    public int getNonce1() {
-        return nonce1;
+    public int getN1Prime() {
+        return n1Prime;
     }
 
-    public int getNonce2() {
-        return nonce2;
+    public int getN2() {
+        return n2;
     }
 
     public String getMovieID() {
@@ -32,8 +32,8 @@ public class PlainPBAuth extends PlainMsgSAPKDP {
     @Override
     public String toString() {
         return "PBAuthentication{" +
-                "nonce1=" + nonce1 +
-                ", nonce2=" + nonce2 +
+                "n1Prime=" + n1Prime +
+                ", n2=" + n2 +
                 ", movieID='" + movieID + '\'' +
                 '}';
     }
@@ -47,8 +47,8 @@ public class PlainPBAuth extends PlainMsgSAPKDP {
             DataOutputStream dao = new DataOutputStream(bao);
 
             try {
-                dao.writeInt(msg.nonce1);
-                dao.writeInt(msg.nonce2);
+                dao.writeInt(msg.n1Prime);
+                dao.writeInt(msg.n2);
                 dao.writeInt(msg.movieID.getBytes().length);
                 dao.write(msg.movieID.getBytes());
             } catch (IOException e) {

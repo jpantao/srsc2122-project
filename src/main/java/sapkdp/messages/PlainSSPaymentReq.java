@@ -6,35 +6,35 @@ import java.io.*;
 public class PlainSSPaymentReq extends PlainMsgSAPKDP {
 
     private final float price;
-    private final int nonce1;
-    private final int nonce2;
+    private final int n2Prime;
+    private final int n3;
 
 
-    public PlainSSPaymentReq(float price, int nonce1, int nonce2) {
+    public PlainSSPaymentReq(float price, int n2Prime, int n3) {
         super(Type.SS_PAYREQ);
         this.price = price;
-        this.nonce1 = nonce1;
-        this.nonce2 = nonce2;
+        this.n2Prime = n2Prime;
+        this.n3 = n3;
     }
 
     public float getPrice() {
         return price;
     }
 
-    public int getNonce1() {
-        return nonce1;
+    public int getN2Prime() {
+        return n2Prime;
     }
 
-    public int getNonce2() {
-        return nonce2;
+    public int getN3() {
+        return n3;
     }
 
     @Override
     public String toString() {
         return "SSPaymentRequest{" +
                 "price=" + price +
-                ", nonce1=" + nonce1 +
-                ", nonce2=" + nonce2 +
+                ", n2Prime=" + n2Prime +
+                ", n3=" + n3 +
                 '}';
     }
 
@@ -48,8 +48,8 @@ public class PlainSSPaymentReq extends PlainMsgSAPKDP {
 
             try {
                 dao.writeFloat(msg.price);
-                dao.writeInt(msg.nonce1);
-                dao.writeInt(msg.nonce2);
+                dao.writeInt(msg.n2Prime);
+                dao.writeInt(msg.n3);
             } catch (IOException e) {
                 e.printStackTrace();
             }

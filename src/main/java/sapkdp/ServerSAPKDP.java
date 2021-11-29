@@ -6,15 +6,11 @@ import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.PublicKey;
-import java.security.Signature;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -105,9 +101,11 @@ public class ServerSAPKDP {
             Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
             Utils.sendIntCheck(out, mac, payload);
             Utils.logSent(paymentReq);
-            out.write(Utils.genIntCheck(mac, payload));
 
-            // TODO: (round 5)
+            //TODO: (round 5)
+
+
+
             //TODO: (round 6)
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,7 +122,7 @@ public class ServerSAPKDP {
 
     private PlainSSPaymentReq genPaymentReq(PlainPBAuth auth) {
         float price = movies.get(auth.getMovieID()).getAsJsonObject().get("ppvprice").getAsFloat();
-        int n2Prime = auth.getNonce2() + 1;
+        int n2Prime = auth.getN2() + 1;
         int n3 = ThreadLocalRandom.current().nextInt();
         return new PlainSSPaymentReq(price, n2Prime, n3);
     }
@@ -139,7 +137,7 @@ public class ServerSAPKDP {
 
         PlainPBAuth auth = (PlainPBAuth) PlainMsgSAPKDP.deserialize(msgType, plaintext);
 
-        if (auth.getNonce1() != authReq.getNonce() + 1)
+        if (auth.getN1Prime() != authReq.getN1() + 1)
             throw new Exception("n1' != n1+1");
 
         return auth;
