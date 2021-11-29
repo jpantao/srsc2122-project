@@ -27,12 +27,12 @@ Default port is 9999.
 java -cp target/srsc-project.jar strserver.StreamServer <port>
 ```
 
-## ProxyBox:
+### ProxyBox
 ```
 java -cp target/srsc-project.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file>
 ```
 
-## Generate voucher:
+### Generate voucher
 ```
 java -cp target/srsc-project.jar extra.VoucherMinter
-```s
+```
