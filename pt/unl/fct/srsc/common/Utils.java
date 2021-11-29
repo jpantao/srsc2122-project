@@ -1,11 +1,19 @@
 package pt.unl.fct.srsc.common;
 
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import pt.unl.fct.srsc.sapkdp.messages.HeaderSAPKDP;
+import pt.unl.fct.srsc.sapkdp.messages.PlainMsgSAPKDP;
+
+import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.util.Properties;
 
 /**
  * Utilities 
@@ -214,5 +222,196 @@ public class Utils
         temp.flush();
         temp.close();
     }
+
+    public static Properties loadConfig(String configFile) {
+        Properties properties = null;
+        try {
+            InputStream inputStream = new FileInputStream(configFile);
+            properties = new Properties();
+            properties.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return properties;
+    }
+
+    public static void loadBC() {
+        Provider provider = Security.getProvider("BC");
+        if (provider == null) {
+            Security.addProvider(new BouncyCastleProvider());
+        }
+    }
+
+    public static KeyPair getKeyPair(String keystoreFile, char[] storepass, String keyalias) {
+        KeyPair kp = null;
+        try {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(keystoreFile), storepass);
+
+            Key k = ks.getKey(keyalias, storepass);
+            if (k instanceof PrivateKey)
+                kp = new KeyPair(ks.getCertificate(keyalias).getPublicKey(), (PrivateKey) k);
+            else
+                throw new Exception("Private key for " + keyalias + "not found in " + keystoreFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return kp;
+    }
+
+    public static PublicKey getPubKey(String keystoreFile, char[] storepass, String alias) {
+        PublicKey pubKey = null;
+        try {
+            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            ks.load(new FileInputStream(keystoreFile), storepass);
+
+            Key k = ks.getKey(alias, storepass);
+            if (k instanceof PrivateKey)
+                pubKey = ks.getCertificate(alias).getPublicKey();
+            else
+                throw new Exception("Private key for " + alias + "not found in " + keystoreFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+        return pubKey;
+    }
+
+    public static void logSent(PlainMsgSAPKDP msg) {
+        System.out.println("[SENT] " + msg);
+    }
+
+    public static void logReceived(PlainMsgSAPKDP msg) {
+        System.out.println("[RECV] " + msg);
+    }
+
+
+    public static void sendWithHeader(DataOutputStream out, int version, PlainMsgSAPKDP.Type type, byte[] payload) throws IOException {
+        HeaderSAPKDP header = new HeaderSAPKDP(version, type.msgType, (short) payload.length);
+        out.write(header.encode());
+        out.write(payload);
+    }
+
+    public static void sendSignature(DataOutputStream out, String algorithm, String provider, PrivateKey key, byte[] data) {
+        try {
+            Signature sig = Signature.getInstance(algorithm, provider);
+            sig.initSign(key, new SecureRandom());
+            sig.update(data);
+            byte[] sigBytes = sig.sign();
+
+
+            out.writeInt(sigBytes.length);
+            out.write(sigBytes);
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | IOException | NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendIntCheck(DataOutputStream out, Mac mac, byte[] data) {
+        try {
+            out.write(Utils.genIntCheck(mac, data));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean readVerifyingIntCheck(DataInputStream in, Mac mac, byte[] data) {
+        byte[] intCheck = readIntCheck(in, mac);
+        return verifyIntCheck(mac, data, intCheck);
+    }
+
+    public static byte[] readIntCheck(DataInputStream in, Mac mac){
+        byte[] intCheck = null;
+        try {
+            intCheck = new byte[mac.getMacLength()];
+            in.read(intCheck);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return intCheck;
+    }
+
+    public static boolean verifyIntCheck(Mac mac, byte[] data, byte[] intCheck) {
+        mac.update(data);
+        return MessageDigest.isEqual(intCheck, mac.doFinal());
+    }
+
+
+    public static boolean readVerifyingSig(DataInputStream in, String algorithm, String provider, PublicKey key, byte[] data) {
+        byte[] sigBytes = readSig(in);
+        return verifySig(algorithm, provider, key, data, sigBytes);
+    }
+
+    public static byte[] readSig(DataInputStream in){
+        byte[] sigBytes = null;
+        try {
+            int sigSize = in.readInt();
+            sigBytes = new byte[sigSize];
+            in.read(sigBytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return sigBytes;
+    }
+
+    public static boolean verifySig(String algorithm, String provider, PublicKey key, byte[] data, byte[] sigBytes){
+        Signature sig = null;
+        try {
+            sig = Signature.getInstance(algorithm, provider);
+            sig.initVerify(key);
+            sig.update(data);
+            return sig.verify(sigBytes);
+        } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException | NoSuchProviderException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static byte[] readConsumingHeader(DataInputStream in, int expectedType) throws IOException {
+        byte[] headerBytes = new byte[HeaderSAPKDP.BYTE_LEN];
+        in.read(headerBytes); //TODO: verify read bytes
+        HeaderSAPKDP header = new HeaderSAPKDP(headerBytes);
+
+        if (header.getMsgType() != expectedType) {
+            return null; // unexpected message type
+        }
+
+        PlainMsgSAPKDP.Type type = PlainMsgSAPKDP.Type.fromOpcode(header.getMsgType());
+        byte[] payload = new byte[header.getPayloadSize()];
+        in.read(payload); //TODO: verify read bytes
+
+        return payload;
+    }
+
+    public static byte[] pbeCipher(int opmode, String pw, String ciphersuite, String provider, byte[] salt, int iterationCounter, byte[] plaintext) {
+        try {
+            PBEKeySpec pbeSpec = new PBEKeySpec(pw.toCharArray());
+            Key k = SecretKeyFactory.getInstance(ciphersuite).generateSecret(pbeSpec);
+            Cipher c = Cipher.getInstance(ciphersuite, provider);
+            c.init(opmode, k, new PBEParameterSpec(salt, iterationCounter));
+            return c.doFinal(plaintext);
+        } catch (InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeySpecException | NoSuchAlgorithmException | NoSuchProviderException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Mac getHMAC(String algorithm, byte[] macKey, String macSuite) {
+        try {
+            Mac hmac = Mac.getInstance(algorithm);
+            hmac.init(new SecretKeySpec(macKey, macSuite));
+            return hmac;
+        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static byte[] genIntCheck(Mac mac, byte[] data) {
+        mac.update(data);
+        return mac.doFinal();
+    }
+
 
 }

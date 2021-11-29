@@ -18,6 +18,8 @@ package pt.unl.fct.srsc.proxy;
  */
 
 import pt.unl.fct.srsc.common.SecureDatagramSocket;
+import pt.unl.fct.srsc.common.Utils;
+import pt.unl.fct.srsc.sapkdp.ClientSAPKDP;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -25,29 +27,76 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 class hjUDPproxy {
+
+
+    public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
+
+    private static String username;
+    private static String password;
+    private static String keystore;
+    private static char[] storepass;
+    private static String proxyinfo;
+
+
+    private static void argparse(String[] args) {
+        for (int i = 0; i < args.length; i++)
+            switch (args[i]) {
+                case "-user":
+                    username = args[++i];
+                    break;
+                case "-password":
+                    try {
+                        MessageDigest md = MessageDigest.getInstance("SHA-512");
+                        password = Utils.toHex(md.digest(args[++i].getBytes()));
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                case "-keystore":
+                    keystore = args[++i];
+                    break;
+                case "-proxyinfo":
+                    proxyinfo = args[++i];
+                    break;
+                case "-storepass":
+                    storepass = args[++i].toCharArray();
+                    break;
+                default:
+                    System.err.println("Unknown option");
+            }
+        if (storepass == null)
+            storepass = KEYSTORE_PASS;
+
+    }
+
     public static void main(String[] args) throws Exception {
-        InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
-        if (inputStream == null) {
-            System.err.println("Configuration file not found!");
-            System.exit(1);
-        }
-        Properties properties = new Properties();
-        properties.load(inputStream);
-        String remote = properties.getProperty("remote");
-        String destinations = properties.getProperty("localdelivery");
+        argparse(args);
+
+        Properties properties = Utils.loadConfig(proxyinfo);
+        String strserver = properties.getProperty("strserver");
+        String mpegplayers = properties.getProperty("mpegplayers");
+        String sigserver = properties.getProperty("sigserver");
+        String proxyBoxID = properties.getProperty("proxyBoxID");
+
+        //TODO: SAPKDP
+        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+        clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
+
 
         ProxyHandshake handShake = new ProxyHandshake();
         handShake.start();
 
-        SocketAddress inSocketAddress = parseSocketAddress(remote);
-        Set<SocketAddress> outSocketAddressSet = Arrays.stream(destinations.split(",")).map(
-                s -> parseSocketAddress(s)).collect(Collectors.toSet());
+        SocketAddress inSocketAddress = parseSocketAddress(strserver);
+        Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
+                hjUDPproxy::parseSocketAddress).collect(Collectors.toSet());
 
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
