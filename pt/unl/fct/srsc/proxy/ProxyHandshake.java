@@ -7,14 +7,15 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.util.Properties;
 
-public class Handshake {
+public class ProxyHandshake {
     private final InetSocketAddress inSocketAddress;
     private final InetSocketAddress outSocketAddress;
     private static final int VERSION = 1;
 
-    public Handshake() throws IOException {
+    public ProxyHandshake() throws IOException {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
         if (inputStream == null) {
             System.err.println("Configuration file not found!");
@@ -34,10 +35,19 @@ public class Handshake {
         DatagramSocket inSocket = new DatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
         outSocket.send(round1Packet());
+        System.out.println("Enviou o 1");
         inSocket.receive(inPacket);
+        processRound2(inPacket);
+        System.out.println("recebeu o 2");
         outSocket.send(round3Packet());
+        System.out.println("Enviou o 3");
 
     }
+
+    private void processRound2(DatagramPacket inPacket) {
+
+    }
+
 
     private static InetSocketAddress parseSocketAddress(String socketAddress) {
         String[] split = socketAddress.split(":");
@@ -50,11 +60,12 @@ public class Handshake {
     private DatagramPacket round1Packet() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-
-
-
-
+        File file = new File("pt/unl/fct/srsc/common/config.properties");
+        dos.writeBytes("ip=localhost\n");
+        dos.writeBytes("port=9999\n");
+        dos.write(Files.readAllBytes(file.toPath()));
         DatagramPacket datagramPacket = makePacket(baos.toByteArray(), 1);
+
         dos.close();
         baos.close();
         return datagramPacket;

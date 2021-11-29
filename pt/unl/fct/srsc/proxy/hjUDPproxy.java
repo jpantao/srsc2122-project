@@ -42,7 +42,7 @@ class hjUDPproxy {
         String remote = properties.getProperty("remote");
         String destinations = properties.getProperty("localdelivery");
 
-        Handshake handShake = new Handshake();
+        ProxyHandshake handShake = new ProxyHandshake();
         handShake.start();
 
         SocketAddress inSocketAddress = parseSocketAddress(remote);
@@ -60,7 +60,8 @@ class hjUDPproxy {
             System.out.print("*");
             for (SocketAddress outSocketAddress : outSocketAddressSet) {
                 // Changed HERE
-                outSocket.send(new DatagramPacket(inPacket.getData(), inPacket.getLength(), outSocketAddress));
+                if (inPacket.getLength() > 0)
+                    outSocket.send(new DatagramPacket(inPacket.getData(), inPacket.getLength(), outSocketAddress));
             }
         }
     }

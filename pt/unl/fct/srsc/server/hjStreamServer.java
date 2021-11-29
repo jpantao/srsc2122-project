@@ -27,7 +27,7 @@ class hjStreamServer {
 		DataInputStream g = new DataInputStream( new FileInputStream(args[0]) );
 		byte[] buff = new byte[4096];
 
-		Handshake handShake = new Handshake();
+		StreamingServerHandshake handShake = new StreamingServerHandshake();
 		handShake.go();
 
 		SecureDatagramSocket s = new SecureDatagramSocket();

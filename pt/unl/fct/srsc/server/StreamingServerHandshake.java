@@ -7,12 +7,12 @@ import java.net.*;
 import java.util.Properties;
 
 
-public class Handshake {
+public class StreamingServerHandshake {
         private final SocketAddress inSocketAddress;
         private final SocketAddress outSocketAddress;
         private static final int VERSION = 1;
 
-    public Handshake() throws IOException {
+    public StreamingServerHandshake() throws IOException {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
         if (inputStream == null) {
             System.err.println("Configuration file not found!");
@@ -38,8 +38,18 @@ public class Handshake {
         DatagramPacket inPacket = new DatagramPacket(inBuffer, inBuffer.length);
         System.out.println("Listening....");
         inSocket.receive(inPacket);
+        processRound1(inPacket);
         outSocket.send(round2Packet());
         inSocket.receive(inPacket);
+        processRound3(inPacket);
+    }
+
+    private void processRound3(DatagramPacket inPacket) {
+
+    }
+
+    private void processRound1(DatagramPacket inPacket) {
+
     }
 
     private DatagramPacket round2Packet() throws IOException {
