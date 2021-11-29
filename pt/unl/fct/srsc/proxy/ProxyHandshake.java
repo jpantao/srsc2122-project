@@ -1,19 +1,19 @@
 package pt.unl.fct.srsc.proxy;
 
-
-
-
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.util.Properties;
 
 public class ProxyHandshake {
     private final InetSocketAddress inSocketAddress;
     private final InetSocketAddress outSocketAddress;
     private static final int VERSION = 1;
+    private static final SecureRandom random = new SecureRandom();
+    private long expectedNonce;
 
     public ProxyHandshake() throws IOException {
         InputStream inputStream = new FileInputStream("pt/unl/fct/srsc/proxy/config.properties");
@@ -35,12 +35,9 @@ public class ProxyHandshake {
         DatagramSocket inSocket = new DatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();
         outSocket.send(round1Packet());
-        System.out.println("Enviou o 1");
         inSocket.receive(inPacket);
         processRound2(inPacket);
-        System.out.println("recebeu o 2");
         outSocket.send(round3Packet());
-        System.out.println("Enviou o 3");
 
     }
 
@@ -58,13 +55,19 @@ public class ProxyHandshake {
 
 
     private DatagramPacket round1Packet() throws IOException {
+        byte[] opaqueTicket = new byte[1024];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         File file = new File("pt/unl/fct/srsc/common/config.properties");
-        dos.writeBytes("ip=localhost\n");
-        dos.writeBytes("port=9999\n");
-        dos.write(Files.readAllBytes(file.toPath()));
-        DatagramPacket datagramPacket = makePacket(baos.toByteArray(), 1);
+//        dos.writeBytes("ip=localhost\n");
+//        dos.writeBytes("port=9999\n");
+//        dos.write(Files.readAllBytes(file.toPath()));
+        dos.write(opaqueTicket);
+        long nonce = random.nextLong();
+        expectedNonce = nonce++;
+        dos.writeLong(nonce);
+
+        DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 1);
 
         dos.close();
         baos.close();
@@ -76,16 +79,15 @@ public class ProxyHandshake {
         DataOutputStream dos = new DataOutputStream(baos);
 
 
-
-
-        DatagramPacket datagramPacket = makePacket(baos.toByteArray(), 3);
+        DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 3);
         dos.close();
         baos.close();
         return datagramPacket;
     }
-    private DatagramPacket makePacket(byte[] data, int msgType) throws IOException {
+
+    private DatagramPacket makeSRTSPPacket(byte[] data, int msgType) throws IOException {
         byte[] outBuffer = new byte[4 * 1024];
-        DatagramPacket outPacket = new DatagramPacket(outBuffer, outBuffer.length, outSocketAddress );
+        DatagramPacket outPacket = new DatagramPacket(outBuffer, outBuffer.length, outSocketAddress);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         baos.write(VERSION);

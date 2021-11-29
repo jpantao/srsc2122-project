@@ -245,7 +245,7 @@ public class VoucherMinter {
         assert signature != null;
         signature.initSign(key, new SecureRandom());
         signature.update(baos.toByteArray());
-        return (signature.sign());
+        return signature.sign();
     }
 
     private static KeyPair generateVoucherKeys() throws NoSuchAlgorithmException {
