@@ -77,7 +77,7 @@ class ProxyBox {
 
         //TODO: SAPKDP
         ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-        clientSAPKDP.handshake("cars");
+        clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
 
 
         //TODO: SRTSP

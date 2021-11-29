@@ -254,8 +254,6 @@ public class Utils
             sig.update(data);
             byte[] sigBytes = sig.sign();
 
-            System.out.println(encodeHexString(sigBytes));
-            System.out.println(encodeHexString(data));
 
             out.writeInt(sigBytes.length);
             out.write(sigBytes);

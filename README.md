@@ -2,9 +2,10 @@
 > A secure “pay-per-view” real-time media streaming system
 
 ## Questions
-* How to better encapsulate the protocols?
-* What's the ciphersuite for the PBE in SAPKDP?
-* The session key mentioned in the spec is supposed to be the keys associated to each movie?
+
+## TODO
+- Fix integrity checks (currently they are only done over the payload excluding signatures)
+- Invalidate coin after use
 
 ## Compiling
 The following command creates the [srsc-project.jar](target/srsc-project.jar) file with all the
@@ -30,4 +31,9 @@ java -cp target/srsc-project.jar strserver.StreamServer <port>
 ## ProxyBox:
 ```
 java -cp target/srsc-project.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file>
+```
+
+## Generate voucher:
+```
+java -cp target/srsc-project.jar extra.VoucherMinter
 ```

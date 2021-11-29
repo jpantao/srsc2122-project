@@ -1,40 +1,42 @@
 package sapkdp.messages;
 
 
+import common.Utils;
+
 import java.io.*;
+import java.util.Arrays;
 
 public class PlainPBPayment extends PlainMsgSAPKDP {
 
-    private final int nonce1;
-    private final int nonce2;
-    //TODO: fix coin
-    private final int paymentCoin;
+    private final int n3Prime;
+    private final int n4;
+    private final byte[] paymentCoin;
 
-    public PlainPBPayment(int nonce1, int nonce2, int paymentCoin) {
+    public PlainPBPayment(int nonce1, int nonce2, byte[] paymentCoin) {
         super(Type.PB_PAYMENT);
-        this.nonce1 = nonce1;
-        this.nonce2 = nonce2;
+        this.n3Prime = nonce1;
+        this.n4 = nonce2;
         this.paymentCoin = paymentCoin;
     }
 
-    public int getNonce1() {
-        return nonce1;
+    public int getN3Prime() {
+        return n3Prime;
     }
 
-    public int getNonce2() {
-        return nonce2;
+    public int getN4() {
+        return n4;
     }
 
-    public int getPaymentCoin() {
+    public byte[] getPaymentCoin() {
         return paymentCoin;
     }
 
     @Override
     public String toString() {
         return "PBPayment{" +
-                "nonce1=" + nonce1 +
-                ", nonce2=" + nonce2 +
-                ", paymentCoin=" + paymentCoin +
+                "nonce1=" + n3Prime +
+                ", nonce2=" + n4 +
+                ", paymentCoin=" + Utils.encodeHexString(paymentCoin) +
                 '}';
     }
 
@@ -47,9 +49,10 @@ public class PlainPBPayment extends PlainMsgSAPKDP {
             DataOutputStream dao = new DataOutputStream(bao);
 
             try {
-                dao.writeInt(msg.nonce1);
-                dao.writeInt(msg.nonce2);
-                dao.writeInt(msg.paymentCoin);
+                dao.writeInt(msg.n3Prime);
+                dao.writeInt(msg.n4);
+                dao.writeInt(msg.paymentCoin.length);
+                dao.write(msg.paymentCoin);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -65,13 +68,14 @@ public class PlainPBPayment extends PlainMsgSAPKDP {
 
             int nonce1 = 0;
             int nonce2 = 0;
-            int paymentCoin = 0;
+            byte[] paymentCoin = null;
 
             try {
                 nonce1 = dai.readInt();
                 nonce2 = dai.readInt();
-                paymentCoin = dai.readInt();
-
+                int coinSize = dai.readInt();
+                paymentCoin = new byte[coinSize];
+                dai.read(paymentCoin);
             } catch (IOException e) {
                 e.printStackTrace();
             }

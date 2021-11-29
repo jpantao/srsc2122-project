@@ -2,6 +2,7 @@ package sapkdp;
 
 import com.google.gson.JsonObject;
 import common.Utils;
+import extra.VoucherMinter;
 import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
@@ -89,9 +90,11 @@ public class ServerSAPKDP {
             // (round 3)
             msgType = PlainMsgSAPKDP.Type.PB_AUTH.msgType;
             payload = Utils.readConsumingHeader(in, msgType);
-            if(!Utils.readVerifyingIntCheck(in, mac, payload))
+            if (!Utils.readVerifyingIntCheck(in, mac, payload))
                 throw new Exception("IntCheck3 failed");
-            PlainPBAuth auth = verifyAuth(msgType, payload, authReq, hello.getUserID());
+            PlainPBAuth auth = decryptAuth(msgType, payload, authReq.getSalt(), authReq.getCounter(), hello.getUserID());
+            if (auth.getN1Prime() != authReq.getN1() + 1)
+                throw new Exception("n1' != n1+1");
             Utils.logReceived(auth);
 
             //TODO: (round 4)
@@ -102,11 +105,29 @@ public class ServerSAPKDP {
             Utils.sendIntCheck(out, mac, payload);
             Utils.logSent(paymentReq);
 
-            //TODO: (round 5)
-
-
+            // (round 5)
+            msgType = PlainMsgSAPKDP.Type.PB_PAYMENT.msgType;
+            payload = Utils.readConsumingHeader(in, msgType);
+            byte[] sigBytes = Utils.readSig(in);
+            if (!Utils.readVerifyingIntCheck(in, mac, payload))
+                throw new Exception("IntCheck5 failed");
+            if (!Utils.verifySig(dsaSuite, provider, keyring.get(PROXYBOX_ALIAS), payload, sigBytes))
+                throw new Exception("Signature for payment could not be verified");
+            PlainPBPayment payment = (PlainPBPayment) PlainMsgSAPKDP.deserialize(msgType, payload);
+            if (payment.getN3Prime() != paymentReq.getN3() + 1)
+                throw new Exception("n3' != n3+1");
+            float voucherVal = VoucherMinter.verifyVoucher(payment.getPaymentCoin());
+            if (voucherVal < 0)
+                throw new Exception("Voucher could not be verified");
+            Utils.logReceived(payment);
 
             //TODO: (round 6)
+            if (!canAccess(auth.getMovieID(), voucherVal))
+                throw new Exception("Voucher value is insufficient");
+
+
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -120,6 +141,21 @@ public class ServerSAPKDP {
         return new PlainSSAuthReq(n1, salt, counter);
     }
 
+    private boolean canAccess(String movieID, float payment){
+        return movies.get(movieID).getAsJsonObject().get("ppvprice").getAsFloat() <= payment;
+    }
+
+    private PlainTicketCreds genTCforClient(String movieID, float payment){
+        String ip = properties.getProperty("strserverIP");
+        int port = Integer.parseInt(properties.getProperty("strserverPORT"));
+        String cipherSuite = properties.getProperty("ciphersuite");
+        String cryptoSA = properties.getProperty("cryptoSA");
+        String sessionKey = properties.getProperty("key");
+
+
+        return null;
+    }
+
     private PlainSSPaymentReq genPaymentReq(PlainPBAuth auth) {
         float price = movies.get(auth.getMovieID()).getAsJsonObject().get("ppvprice").getAsFloat();
         int n2Prime = auth.getN2() + 1;
@@ -127,20 +163,13 @@ public class ServerSAPKDP {
         return new PlainSSPaymentReq(price, n2Prime, n3);
     }
 
-    private synchronized static PlainPBAuth verifyAuth(int msgType, byte[] ciphertext, PlainSSAuthReq authReq, String userID) throws Exception {
-
+    private synchronized static PlainPBAuth decryptAuth(int msgType, byte[] ciphertext, byte[] salt, int counter, String userID) {
         String ciphersuite = properties.getProperty("pbe-ciphersuite");
         String provider = properties.getProperty("provider");
         String password = users.get(userID).getAsJsonObject().get("password").getAsString();
-        byte[] plaintext = Utils.pbeCipher(Cipher.DECRYPT_MODE, password, ciphersuite, provider,
-                authReq.getSalt(), authReq.getCounter(), ciphertext);
+        byte[] plaintext = Utils.pbeCipher(Cipher.DECRYPT_MODE, password, ciphersuite, provider, salt, counter, ciphertext);
 
-        PlainPBAuth auth = (PlainPBAuth) PlainMsgSAPKDP.deserialize(msgType, plaintext);
-
-        if (auth.getN1Prime() != authReq.getN1() + 1)
-            throw new Exception("n1' != n1+1");
-
-        return auth;
+        return (PlainPBAuth) PlainMsgSAPKDP.deserialize(msgType, plaintext);
     }
 
 

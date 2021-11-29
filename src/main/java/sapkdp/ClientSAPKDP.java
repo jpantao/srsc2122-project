@@ -1,14 +1,19 @@
 package sapkdp;
 
 import common.Utils;
+import extra.VoucherMinter;
 import sapkdp.messages.*;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -60,7 +65,7 @@ public class ClientSAPKDP {
     }
 
 
-    public void handshake(String movieID) {
+    public void handshake(String movieID, String coinFile) {
         String[] addr = sigserverAddr.split(":");
         try (Socket sock = new Socket(addr[0], Integer.parseInt(addr[1]))) {
             DataInputStream in = new DataInputStream(sock.getInputStream());
@@ -94,19 +99,26 @@ public class ClientSAPKDP {
             msgType = PlainMsgSAPKDP.Type.SS_PAYREQ.msgType;
             payload = Utils.readConsumingHeader(in, msgType);
             byte[] sigBytes = Utils.readSig(in);
-            Utils.readVerifyingIntCheck(in, mac, payload);
+            if (!Utils.readVerifyingIntCheck(in, mac, payload))
+                throw new Exception("IntCheck4 failed");
             if (!Utils.verifySig(dsaSuite, provider, keyring.get(SIGSERVER_ALIAS), payload, sigBytes))
                 throw new Exception("Signature for payment request could not be verified");
             PlainSSPaymentReq paymentReq = (PlainSSPaymentReq) PlainMsgSAPKDP.deserialize(msgType, payload);
-            Utils.logReceived(paymentReq);
-
             if (paymentReq.getN2Prime() != auth.getN2() + 1)
                 throw new Exception("n2' != n2+1");
+            Utils.logReceived(paymentReq);
 
-            //TODO: (round 5)
-
+            // (round 5)
+            PlainPBPayment payment = genPlainPayment(paymentReq, coinFile);
+            payload = PlainMsgSAPKDP.serialize(payment);
+            Utils.sendWithHeader(out, VERSION, payment.getType(), payload);
+            Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
+            Utils.sendIntCheck(out, mac, payload);
+            Utils.logSent(payment);
 
             //TODO: (round 6)
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -118,6 +130,13 @@ public class ClientSAPKDP {
         int n1Prime = req.getN1() + 1;
         int n2 = ThreadLocalRandom.current().nextInt();
         return new PlainPBAuth(n1Prime, n2, movieID);
+    }
+
+    private PlainPBPayment genPlainPayment(PlainSSPaymentReq req, String coinFile) throws IOException {
+        int n3Prime = req.getN3() + 1;
+        int n4 = ThreadLocalRandom.current().nextInt();
+        byte[] coinBytes = Files.readAllBytes((new File(coinFile)).toPath());
+        return new PlainPBPayment(n3Prime, n4, coinBytes);
     }
 
     private byte[] encryptAuth(PlainPBAuth auth, byte[] salt, int counter, String password) throws IOException {

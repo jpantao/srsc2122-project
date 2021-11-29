@@ -12,10 +12,12 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
     private final String ciphersuiteConf;
     private final String cryptoSA;
     private final String sessionKey;
+    private final String macsuite;
     private final String macKey;
+    private final String iv;
     private final int nonce;
 
-    public PlainTicketCreds(String ip, int port, String movieID, String ciphersuiteConf, String cryptoSA, String sessionKey, String macKey, int nonce) {
+    public PlainTicketCreds(String ip, int port, String movieID, String ciphersuiteConf, String cryptoSA, String sessionKey, String macsuite, String macKey, String iv, int nonce) {
         super(Type.PB_TKCREDS);
         this.ip = ip;
         this.port = port;
@@ -23,7 +25,9 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
         this.ciphersuiteConf = ciphersuiteConf;
         this.cryptoSA = cryptoSA;
         this.sessionKey = sessionKey;
+        this.macsuite = macsuite;
         this.macKey = macKey;
+        this.iv = iv;
         this.nonce = nonce;
     }
 
@@ -82,20 +86,24 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             DataOutputStream dao = new DataOutputStream(bao);
 
             try {
-                dao.writeInt(msg.ip.length());
-                dao.writeChars(msg.ip);
+                dao.writeInt(msg.ip.getBytes().length);
+                dao.write(msg.ip.getBytes());
                 dao.writeInt(msg.port);
-                dao.writeInt(msg.movieID.length());
-                dao.writeChars(msg.movieID);
-                dao.writeInt(msg.ciphersuiteConf.length());
-                dao.writeChars(msg.ciphersuiteConf);
-                dao.writeInt(msg.cryptoSA.length());
-                dao.writeChars(msg.cryptoSA);
-                dao.writeInt(msg.sessionKey.length());
-                dao.writeChars(msg.sessionKey);
-                dao.writeInt(msg.macKey.length());
-                dao.writeChars(msg.macKey);
+                dao.writeInt(msg.movieID.getBytes().length);
+                dao.write(msg.movieID.getBytes());
+                dao.writeInt(msg.ciphersuiteConf.getBytes().length);
+                dao.write(msg.ciphersuiteConf.getBytes());
+                dao.writeInt(msg.cryptoSA.getBytes().length);
+                dao.write(msg.cryptoSA.getBytes());
+                dao.writeInt(msg.sessionKey.getBytes().length);
+                dao.write(msg.sessionKey.getBytes());
+                dao.writeInt(msg.macKey.getBytes().length);
+                dao.write(msg.macKey.getBytes());
                 dao.writeInt(msg.nonce);
+                dao.writeInt(msg.iv.getBytes().length);
+                dao.write(msg.iv.getBytes());
+                dao.writeInt(msg.macsuite.getBytes().length);
+                dao.write(msg.macsuite.getBytes());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -117,6 +125,8 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             String sessionKey = "";
             String macKey = "";
             int nonce = 0;
+            String iv = "";
+            String macsuite = "";
 
             try {
                 ip = getString(dai);
@@ -127,12 +137,14 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
                 sessionKey = getString(dai);
                 macKey = getString(dai);
                 nonce = dai.readInt();
+                iv = getString(dai);
+                macsuite = getString(dai);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
 
-            return new PlainTicketCreds(ip, port, movieID, ciphersuiteConf, cryptoSA, sessionKey, macKey, nonce);
+            return new PlainTicketCreds(ip, port, movieID, ciphersuiteConf, cryptoSA, sessionKey, macsuite, macKey, iv, nonce);
         }
 
 
