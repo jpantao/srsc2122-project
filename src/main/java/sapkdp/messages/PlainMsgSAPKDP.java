@@ -1,9 +1,6 @@
 package sapkdp.messages;
 
 
-import java.io.DataInputStream;
-import java.io.IOException;
-
 public abstract class PlainMsgSAPKDP {
 
     public enum Type {
@@ -15,34 +12,34 @@ public abstract class PlainMsgSAPKDP {
         PB_TKCREDS(6, PlainTicketCreds.serializer);
 
 
-        public final int msgType;
+        public final int value;
         private final Serializer<PlainMsgSAPKDP> serializer;
 
-        private static final Type[] opcodeIdx;
+        private static final Type[] msgcodeIdx;
 
         static {
             int maxOpcode = -1;
             for (Type type : Type.values())
-                maxOpcode = Math.max(maxOpcode, type.msgType);
-            opcodeIdx = new Type[maxOpcode + 1];
+                maxOpcode = Math.max(maxOpcode, type.value);
+            msgcodeIdx = new Type[maxOpcode + 1];
             for (Type type : Type.values()) {
-                if (opcodeIdx[type.msgType] != null)
+                if (msgcodeIdx[type.value] != null)
                     throw new IllegalStateException("Duplicate opcode");
-                opcodeIdx[type.msgType] = type;
+                msgcodeIdx[type.value] = type;
             }
         }
 
-        Type(int msgType, Serializer<PlainMsgSAPKDP> serializer) {
-            this.msgType = msgType;
+        Type(int value, Serializer<PlainMsgSAPKDP> serializer) {
+            this.value = value;
             this.serializer = serializer;
         }
 
-        public static Type fromOpcode(int opcode) {
-            if (opcode >= opcodeIdx.length || opcode < 0)
-                throw new AssertionError(String.format("Unknown opcode %d", opcode));
-            Type t = opcodeIdx[opcode];
+        public static Type fromOpcode(int msgcode) {
+            if (msgcode >= msgcodeIdx.length || msgcode < 0)
+                throw new AssertionError(String.format("Unknown msgcode %d", msgcode));
+            Type t = msgcodeIdx[msgcode];
             if (t == null)
-                throw new AssertionError(String.format("Unknown opcode %d", opcode));
+                throw new AssertionError(String.format("Unknown msgcode %d", msgcode));
             return t;
         }
     }
@@ -61,8 +58,8 @@ public abstract class PlainMsgSAPKDP {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof PlainMsgSAPKDP)) return false;
-        PlainMsgSAPKDP operation = (PlainMsgSAPKDP) o;
-        return type == operation.type;
+        PlainMsgSAPKDP msg = (PlainMsgSAPKDP) o;
+        return type == msg.type;
     }
 
 

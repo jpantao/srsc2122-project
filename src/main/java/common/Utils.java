@@ -1,6 +1,8 @@
 package common;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import rtstp.messages.HeaderRTSTP;
+import rtstp.messages.PlainMsgRTSTP;
 import sapkdp.messages.HeaderSAPKDP;
 import sapkdp.messages.PlainMsgSAPKDP;
 import sapkdp.messages.PlainTicketCreds;
@@ -264,28 +266,34 @@ public class Utils
         return pubKey;
     }
 
-    public static void logSent(PlainMsgSAPKDP msg) {
+    public static void logSent(Object msg) {
         System.out.println("[SENT] " + msg);
     }
 
-    public static void logReceived(PlainMsgSAPKDP msg) {
+    public static void logReceived(Object msg) {
         System.out.println("[RECV] " + msg);
     }
 
 
-    public static void sendWithHeader(DataOutputStream out, int version, PlainMsgSAPKDP.Type type, byte[] payload) throws IOException {
-        HeaderSAPKDP header = new HeaderSAPKDP(version, type.msgType, (short) payload.length);
+    public static void writeWithHeaderSAPKDP(DataOutputStream out, int version, PlainMsgSAPKDP.Type type, byte[] payload) throws IOException {
+        HeaderSAPKDP header = new HeaderSAPKDP(version, type.value, (short) payload.length);
         out.write(header.encode());
         out.write(payload);
     }
 
-    public static void sendSignature(DataOutputStream out, String algorithm, String provider, PrivateKey key, byte[] data) {
+    public static void writeWithHeaderRTSTP(DataOutputStream out, int version, PlainMsgRTSTP.Type type, byte[] payload) throws IOException {
+        HeaderRTSTP header = new HeaderRTSTP(version, type.value, (short) payload.length);
+        out.write(header.encode());
+        out.write(payload);
+    }
+
+
+    public static void writeSignature(DataOutputStream out, String algorithm, String provider, PrivateKey key, byte[] data) {
         try {
             Signature sig = Signature.getInstance(algorithm, provider);
             sig.initSign(key, new SecureRandom());
             sig.update(data);
             byte[] sigBytes = sig.sign();
-
 
             out.writeInt(sigBytes.length);
             out.write(sigBytes);
@@ -294,7 +302,7 @@ public class Utils
         }
     }
 
-    public static void sendIntCheck(DataOutputStream out, Mac mac, byte[] data) {
+    public static void writeIntCheck(DataOutputStream out, Mac mac, byte[] data) {
         try {
             out.write(Utils.genIntCheck(mac, data));
         } catch (IOException e) {
@@ -438,7 +446,7 @@ public class Utils
     public static PlainTicketCreds decryptTicket(byte[] ticketCipher, String ciphersuite, PrivateKey key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         Cipher c = Cipher.getInstance(ciphersuite);
         c.init(Cipher.DECRYPT_MODE, key);
-        return (PlainTicketCreds) PlainMsgSAPKDP.deserialize(PlainMsgSAPKDP.Type.PB_TKCREDS.msgType, c.doFinal(ticketCipher));
+        return (PlainTicketCreds) PlainMsgSAPKDP.deserialize(PlainMsgSAPKDP.Type.PB_TKCREDS.value, c.doFinal(ticketCipher));
     }
 
     public static byte[] encryptTicket(PlainTicketCreds ticket, String ciphersuite, PublicKey key) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException {

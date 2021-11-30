@@ -33,7 +33,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class hjUDPproxy {
+class ProxyBox {
 
 
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
@@ -80,26 +80,27 @@ class hjUDPproxy {
         argparse(args);
 
         Properties properties = Utils.loadConfig(proxyinfo);
-        String strserver = properties.getProperty("strserver");
         String mpegplayers = properties.getProperty("mpegplayers");
-        String sigserver = properties.getProperty("sigserver");
+        String sigserver = properties.getProperty("sigserverAddr");
         String proxyBoxID = properties.getProperty("proxyBoxID");
+        int strserverPort = Integer.parseInt(properties.getProperty("strserverPort"));
 
         // SAPKDP
-//        ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-//        client.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
-//
-//        PlainTicketCreds ticket = client.getClientTicket();
-//        byte[] rtssCipherTicket = client.getRtssCipherTicket();
-//        byte[] payloads = client.getPayloads();
-//        byte[] sigBytes = client.getSigBytes();
+        ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+        client.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
 
-//        ProxyHandshake handShake = new ProxyHandshake();
-//        handShake.start();
+        PlainTicketCreds ticket = client.getClientTicket();
+        byte[] rtssCipherTicket = client.getRtssCipherTicket();
+        byte[] payloads = client.getPayloads();
+        byte[] sigBytes = client.getSigBytes();
 
-        SocketAddress inSocketAddress = parseSocketAddress(strserver);
+        String streamingAddr = ticket.getIp() + ":" + strserverPort;
+        ProxyHandshake handShake = new ProxyHandshake(streamingAddr, ticket.getClientPort());
+        handShake.start(rtssCipherTicket, sigBytes);
+
+        SocketAddress inSocketAddress = parseSocketAddress(ticket.getIp() + ":" + strserverPort);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
-                hjUDPproxy::parseSocketAddress).collect(Collectors.toSet());
+                ProxyBox::parseSocketAddress).collect(Collectors.toSet());
 
         SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
         DatagramSocket outSocket = new DatagramSocket();

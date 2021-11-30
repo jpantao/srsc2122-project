@@ -95,11 +95,11 @@ public class ClientSAPKDP {
             // (round 1)
             PlainPBHello hello = new PlainPBHello(userID, pboxID);
             payload = PlainMsgSAPKDP.serialize(hello);
-            Utils.sendWithHeader(out, VERSION, hello.getType(), payload);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, hello.getType(), payload);
             Utils.logSent(hello);
 
             // (round 2)
-            msgType = PlainMsgSAPKDP.Type.SS_AUTHREQ.msgType;
+            msgType = PlainMsgSAPKDP.Type.SS_AUTHREQ.value;
             payload = Utils.readConsumingHeader(in, msgType);
             PlainSSAuthReq authReq = (PlainSSAuthReq) PlainMsgSAPKDP.deserialize(msgType, payload);
             Utils.logReceived(authReq);
@@ -107,12 +107,12 @@ public class ClientSAPKDP {
             // (round 3)
             PlainPBAuth auth = genPlainAuth(authReq, movieID);
             payload = encryptAuth(auth, authReq.getSalt(), authReq.getCounter(), userPW);
-            Utils.sendWithHeader(out, VERSION, auth.getType(), payload);
-            Utils.sendIntCheck(out, mac, payload);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, auth.getType(), payload);
+            Utils.writeIntCheck(out, mac, payload);
             Utils.logSent(auth);
 
             // (round 4)
-            msgType = PlainMsgSAPKDP.Type.SS_PAYREQ.msgType;
+            msgType = PlainMsgSAPKDP.Type.SS_PAYREQ.value;
             payload = Utils.readConsumingHeader(in, msgType);
             sigBytes = Utils.readSig(in);
             if (!Utils.readVerifyingIntCheck(in, mac, payload))
@@ -127,13 +127,14 @@ public class ClientSAPKDP {
             // (round 5)
             PlainPBPayment payment = genPlainPayment(paymentReq, coinFile);
             payload = PlainMsgSAPKDP.serialize(payment);
-            Utils.sendWithHeader(out, VERSION, payment.getType(), payload);
-            Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
-            Utils.sendIntCheck(out, mac, payload);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, payment.getType(), payload);
+            Utils.writeSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
+            Utils.writeIntCheck(out, mac, payload);
             Utils.logSent(payment);
 
             // (round 6)
-            msgType = PlainMsgSAPKDP.Type.PB_TKCREDS.msgType;
+            msgType = PlainMsgSAPKDP.Type.PB_TKCREDS.value;
+            payload = Utils.readConsumingHeader(in, msgType);
             this.payloads = Arrays.copyOf(payload, payload.length);
             int clientTicketCipherSize = in.readInt();
             int rtssTicketCipherSize = in.readInt();
@@ -143,7 +144,6 @@ public class ClientSAPKDP {
             if (!Utils.verifySig(dsaSuite, provider, keyring.get(SIGSERVER_ALIAS), payload, sigBytes))
                 throw new Exception("Signature for ticket creds could not be verified");
 
-            payloads = Utils.readConsumingHeader(in, msgType);
             this.sigBytes = sigBytes;
             byte[] cipherClientTC = extractBytes(payload, clientTicketCipherSize);
             byte[] cipherRtssTC = extractBytes(payload, rtssTicketCipherSize);

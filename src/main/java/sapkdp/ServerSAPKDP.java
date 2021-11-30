@@ -74,7 +74,7 @@ public class ServerSAPKDP {
             byte[] payload;
 
             // (round 1)
-            msgType = PlainMsgSAPKDP.Type.PB_HELLO.msgType;
+            msgType = PlainMsgSAPKDP.Type.PB_HELLO.value;
             payload = Utils.readConsumingHeader(in, msgType);
             PlainPBHello hello = (PlainPBHello) PlainMsgSAPKDP.deserialize(msgType, payload);
             Utils.logReceived(hello);
@@ -82,11 +82,11 @@ public class ServerSAPKDP {
             // (round 2)
             PlainSSAuthReq authReq = genAuthReq();
             payload = PlainMsgSAPKDP.serialize(authReq);
-            Utils.sendWithHeader(out, VERSION, authReq.getType(), payload);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, authReq.getType(), payload);
             Utils.logSent(authReq);
 
             // (round 3)
-            msgType = PlainMsgSAPKDP.Type.PB_AUTH.msgType;
+            msgType = PlainMsgSAPKDP.Type.PB_AUTH.value;
             payload = Utils.readConsumingHeader(in, msgType);
             if (!Utils.readVerifyingIntCheck(in, mac, payload))
                 throw new Exception("IntCheck3 failed");
@@ -98,13 +98,13 @@ public class ServerSAPKDP {
             // (round 4)
             PlainSSPaymentReq paymentReq = genPaymentReq(auth);
             payload = PlainMsgSAPKDP.serialize(paymentReq);
-            Utils.sendWithHeader(out, VERSION, paymentReq.getType(), payload);
-            Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
-            Utils.sendIntCheck(out, mac, payload);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, paymentReq.getType(), payload);
+            Utils.writeSignature(out, dsaSuite, provider, keyPair.getPrivate(), payload);
+            Utils.writeIntCheck(out, mac, payload);
             Utils.logSent(paymentReq);
 
             // (round 5)
-            msgType = PlainMsgSAPKDP.Type.PB_PAYMENT.msgType;
+            msgType = PlainMsgSAPKDP.Type.PB_PAYMENT.value;
             payload = Utils.readConsumingHeader(in, msgType);
             byte[] sigBytes = Utils.readSig(in);
             if (!Utils.readVerifyingIntCheck(in, mac, payload))
@@ -130,11 +130,11 @@ public class ServerSAPKDP {
             byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"),keyring.get(PROXYBOX_ALIAS));
             byte[] rtssCipherTicket = Utils.encryptTicket(rtssTicket, properties.getProperty("asym-ciphersuite"),keyring.get(STRSERVER_ALIAS));
             byte[] payloads = Utils.joinByteArrays(new byte[][]{clientCipherTicket, rtssCipherTicket});
-            Utils.sendWithHeader(out, VERSION, PlainMsgSAPKDP.Type.PB_TKCREDS, payloads);
+            Utils.writeWithHeaderSAPKDP(out, VERSION, PlainMsgSAPKDP.Type.PB_TKCREDS, payloads);
             out.writeInt(clientCipherTicket.length); // send client ticket cipher size
             out.writeInt(rtssCipherTicket.length); // send rtss ticket cipher size
-            Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payloads);
-            Utils.sendIntCheck(out, mac, payloads);
+            Utils.writeSignature(out, dsaSuite, provider, keyPair.getPrivate(), payloads);
+            Utils.writeIntCheck(out, mac, payloads);
             Utils.logSent(clientTicket);
             Utils.logSent(rtssTicket);
 

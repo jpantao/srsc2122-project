@@ -33,8 +33,8 @@ public class PlainPBPayment extends PlainMsgSAPKDP {
     @Override
     public String toString() {
         return "PBPayment{" +
-                "nonce1=" + n3Prime +
-                ", nonce2=" + n4 +
+                "n3Prime=" + n3Prime +
+                ", n4=" + n4 +
                 ", paymentCoin=" + Utils.encodeHexString(paymentCoin) +
                 '}';
     }
