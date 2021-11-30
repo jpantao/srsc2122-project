@@ -57,19 +57,7 @@ public class ProxyHandshake {
         byte[] opaqueTicket = new byte[1024];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        File file = new File("pt/unl/fct/srsc/common/config.properties");
-//        dos.writeBytes("ip=localhost\n");
-//        dos.writeBytes("port=9999\n");
-//        dos.write(Files.readAllBytes(file.toPath()));
-        dos.write(opaqueTicket);
-        long nonce = random.nextLong();
-        expectedNonce = nonce++;
-        dos.writeLong(nonce);
 
-        DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 1);
-
-        dos.close();
-        baos.close();
         return datagramPacket;
     }
 
