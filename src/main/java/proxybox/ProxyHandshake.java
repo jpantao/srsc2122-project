@@ -57,7 +57,6 @@ public class ProxyHandshake {
         byte[] opaqueTicket = new byte[1024];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 3);
 
         return datagramPacket;
     }
@@ -65,9 +64,9 @@ public class ProxyHandshake {
     private DatagramPacket round3Packet() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
+
+
         DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 3);
-
-
         dos.close();
         baos.close();
         return datagramPacket;
