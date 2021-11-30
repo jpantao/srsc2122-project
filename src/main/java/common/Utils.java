@@ -180,7 +180,7 @@ public class Utils
     public static void generatePBId() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
         FileInputStream is = new FileInputStream("pt/unl/fct/srsc/common/this.keystore");
 
-        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(is, "srsc2122".toCharArray());
 
         String keyAlias = "proxybox";
@@ -231,7 +231,7 @@ public class Utils
     public static KeyPair getKeyPair(String keystoreFile, char[] storepass, String keyalias) {
         KeyPair kp = null;
         try {
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(new FileInputStream(keystoreFile), storepass);
 
             Key k = ks.getKey(keyalias, storepass);
@@ -249,7 +249,7 @@ public class Utils
     public static PublicKey getPubKey(String keystoreFile, char[] storepass, String alias) {
         PublicKey pubKey = null;
         try {
-            KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+            KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(new FileInputStream(keystoreFile), storepass);
 
             Key k = ks.getKey(alias, storepass);

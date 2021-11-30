@@ -265,7 +265,7 @@ public class VoucherMinter {
     private static KeyPair getIssuerKeys() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
         FileInputStream is = new FileInputStream(KEYSTORE_PATH);
 
-        KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+        KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(is, SRSC_2122.toCharArray());
 
         String alias = COINISSUER;
