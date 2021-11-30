@@ -57,6 +57,7 @@ public class ProxyHandshake {
         byte[] opaqueTicket = new byte[1024];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
+        DatagramPacket datagramPacket = makeSRTSPPacket(baos.toByteArray(), 3);
 
         return datagramPacket;
     }
