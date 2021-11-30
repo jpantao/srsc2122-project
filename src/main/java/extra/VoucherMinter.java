@@ -30,7 +30,7 @@ public class VoucherMinter {
     private static final String ISSUER_PUB_KEY = "IssuerPublicKey=";
     private static final String INT_PROOF_1 = "IntegrityProof1=";
     private static final String INT_PROOF_2 = "IntegrityProof2=";
-    private static final String VOUCHER_PATH = "vouchers/coin_";
+    private static final String VOUCHER_PATH = "resources/coin_";
     private static final String VOUCHER_EXTENSION = ".voucher";
     private static final String PROVIDER = "BC";
     private static final String SHA_512_WITH_ECDSA = "SHA512withECDSA";
