@@ -34,7 +34,7 @@ public class VoucherMinter {
     private static final String VOUCHER_EXTENSION = ".voucher";
     private static final String PROVIDER = "BC";
     private static final String SHA_512_WITH_ECDSA = "SHA512withECDSA";
-    private static final String KEYSTORE_PATH = "keystores/this.keystore";
+    private static final String KEYSTORE_PATH = "keystores/coinissuer.keystore";
     private static final String SRSC_2122 = "srsc2122";
     private static final String COINISSUER = "coinissuer";
     private static final String VOUCHER_MINTER = "----------- VOUCHER MINTER -----------";
@@ -55,12 +55,12 @@ public class VoucherMinter {
 
     static public void main(String []args ) throws Exception {
 
-//        File file = new File("pt/unl/fct/srsc/extra/coin_3040021e3c118bf.voucher");
-//        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
+        File file = new File("vouchers/coin_3040021e2ab0122.voucher");
+        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
     mintVoucher();
     }
 
-    public static int verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException {
+    public static int verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException, CertificateException, KeyStoreException, UnrecoverableKeyException {
         Properties properties = new Properties();
         try {
             properties.load(new ByteArrayInputStream(voucher));
@@ -263,7 +263,8 @@ public class VoucherMinter {
     }
 
     private static KeyPair getIssuerKeys() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableKeyException {
-        FileInputStream is = new FileInputStream(KEYSTORE_PATH);
+        FileInputStream is = new FileInputStream("keystores/coinissuer.keystore");
+//        FileInputStream is = new FileInputStream(KEYSTORE_PATH);
 
         KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(is, SRSC_2122.toCharArray());

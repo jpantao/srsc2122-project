@@ -178,7 +178,7 @@ public class Utils
     }
 
     public static void generatePBId() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        FileInputStream is = new FileInputStream("pt/unl/fct/srsc/common/this.keystore");
+        FileInputStream is = new FileInputStream("keystore/this.keystore");
 
         KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(is, "srsc2122".toCharArray());
@@ -202,7 +202,7 @@ public class Utils
         }
         random.nextBytes(random256);
         System.arraycopy(random256, 0, id, 91, 32);
-        DataOutputStream temp = new DataOutputStream(new FileOutputStream("pt/unl/fct/srsc/common/id.txt"));
+        DataOutputStream temp = new DataOutputStream(new FileOutputStream("id.txt"));
         String tempString = Utils.encodeHexString(id);
         temp.writeBytes(tempString);
         temp.flush();
