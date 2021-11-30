@@ -1,18 +1,15 @@
 package sapkdp;
 
 import com.google.gson.JsonObject;
-
 import common.Utils;
 import extra.VoucherMinter;
 import sapkdp.messages.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
+import javax.crypto.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
-import java.security.KeyPair;
-import java.security.PublicKey;
+import java.security.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -122,10 +119,24 @@ public class ServerSAPKDP {
                 throw new Exception("Voucher could not be verified");
             Utils.logReceived(payment);
 
-            //TODO: (round 6)
-            if (!canAccess(auth.getMovieID(), voucherVal))
+            // (round 6)
+            if (!verifyVoucherVal(auth.getMovieID(), voucherVal))
                 throw new Exception("Voucher value is insufficient");
 
+
+            int clientPort = ThreadLocalRandom.current().nextInt(5000, 6000);
+            PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), clientPort, payment.getN4() + 1);
+            PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), clientPort, payment.getN4() + 1);
+            byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"),keyring.get(PROXYBOX_ALIAS));
+            byte[] rtssCipherTicket = Utils.encryptTicket(rtssTicket, properties.getProperty("asym-ciphersuite"),keyring.get(STRSERVER_ALIAS));
+            byte[] payloads = Utils.joinByteArrays(new byte[][]{clientCipherTicket, rtssCipherTicket});
+            Utils.sendWithHeader(out, VERSION, PlainMsgSAPKDP.Type.PB_TKCREDS, payloads);
+            out.writeInt(clientCipherTicket.length); // send client ticket cipher size
+            out.writeInt(rtssCipherTicket.length); // send rtss ticket cipher size
+            Utils.sendSignature(out, dsaSuite, provider, keyPair.getPrivate(), payloads);
+            Utils.sendIntCheck(out, mac, payloads);
+            Utils.logSent(clientTicket);
+            Utils.logSent(rtssTicket);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -140,20 +151,21 @@ public class ServerSAPKDP {
         return new PlainSSAuthReq(n1, salt, counter);
     }
 
-    private boolean canAccess(String movieID, float payment) {
-        return movies.get(movieID).getAsJsonObject().get("ppvprice").getAsFloat() <= payment;
+    private boolean verifyVoucherVal(String movieID, float voucherVal) {
+        return movies.get(movieID).getAsJsonObject().get("ppvprice").getAsFloat() <= voucherVal;
     }
 
-    private PlainTicketCreds genTCforClient(String movieID, float payment) {
-        String ip = properties.getProperty("strserverIP");
-        int port = Integer.parseInt(properties.getProperty("strserverPORT"));
-        String cipherSuite = properties.getProperty("ciphersuite");
-        String cryptoSA = properties.getProperty("cryptoSA");
-        String sessionKey = properties.getProperty("key");
+    private PlainTicketCreds genTC(String movieID, String ip, int port, int nonce) {
 
+        JsonObject movie = movies.get(movieID).getAsJsonObject();
+        String ciphersuiteConf = movie.get("ciphersuite").getAsString();
+        String cryptoSA = movie.get("cryptoSA").getAsString();
+        byte[] sessionkeyBytes = Utils.decodeHexString(movie.get("keyBytes").getAsString());
+        byte[] mackeyBytes = Utils.decodeHexString(movie.get("mackeyBytes").getAsString());
 
-        return null;
+        return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, mackeyBytes, nonce);
     }
+
 
     private PlainSSPaymentReq genPaymentReq(PlainPBAuth auth) {
         float price = movies.get(auth.getMovieID()).getAsJsonObject().get("ppvprice").getAsFloat();

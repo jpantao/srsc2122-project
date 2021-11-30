@@ -71,7 +71,6 @@ public class PlainSSPaymentReq extends PlainMsgSAPKDP {
                 price = dai.readFloat();
                 nonce1 = dai.readInt();
                 nonce2 = dai.readInt();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }

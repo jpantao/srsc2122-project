@@ -50,8 +50,7 @@ public class PlainPBPayment extends PlainMsgSAPKDP {
             try {
                 dao.writeInt(msg.n3Prime);
                 dao.writeInt(msg.n4);
-                dao.writeInt(msg.paymentCoin.length);
-                dao.write(msg.paymentCoin);
+                Utils.writeByteArray(dao, msg.paymentCoin);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -72,9 +71,7 @@ public class PlainPBPayment extends PlainMsgSAPKDP {
             try {
                 nonce1 = dai.readInt();
                 nonce2 = dai.readInt();
-                int coinSize = dai.readInt();
-                paymentCoin = new byte[coinSize];
-                dai.read(paymentCoin);
+                paymentCoin = Utils.readByteArray(dai);
             } catch (IOException e) {
                 e.printStackTrace();
             }

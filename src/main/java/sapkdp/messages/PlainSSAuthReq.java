@@ -1,6 +1,8 @@
 package sapkdp.messages;
 
 
+import common.Utils;
+
 import java.io.*;
 import java.util.Arrays;
 
@@ -49,8 +51,7 @@ public class PlainSSAuthReq extends PlainMsgSAPKDP {
 
             try {
                 dao.writeInt(msg.n1);
-                dao.writeInt(msg.salt.length);
-                dao.write(msg.salt);
+                Utils.writeByteArray(dao, msg.salt);
                 dao.writeInt(msg.counter);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -70,17 +71,9 @@ public class PlainSSAuthReq extends PlainMsgSAPKDP {
             byte[] salt = null;
 
             try {
-
                 nonce = dai.readInt();
-
-                int saltSize = dai.readInt();
-                salt = new byte[saltSize];
-                int read = dai.read(salt);
-                if (read != saltSize)
-                    throw new IOException("read " + read + " should have been " + saltSize);
-
+                salt = Utils.readByteArray(dai);
                 counter = dai.readInt();
-
             } catch (IOException e) {
                 e.printStackTrace();
             }

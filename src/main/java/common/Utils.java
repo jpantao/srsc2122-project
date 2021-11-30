@@ -3,6 +3,7 @@ package common;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import sapkdp.messages.HeaderSAPKDP;
 import sapkdp.messages.PlainMsgSAPKDP;
+import sapkdp.messages.PlainTicketCreds;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
@@ -10,6 +11,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
@@ -412,6 +414,55 @@ public class Utils
         mac.update(data);
         return mac.doFinal();
     }
+
+    public static String readSting(DataInputStream in) throws IOException {
+        return new String(readByteArray(in));
+    }
+
+    public static byte[] readByteArray(DataInputStream in) throws IOException{
+        int read;
+        int size = in.readInt();
+        byte[] buf = new byte[size];
+        read = in.read(buf);
+        if (read != size)
+            throw new IOException("read " + read + " should have been " + size);
+        return buf;
+    }
+
+    public static void writeByteArray(DataOutputStream out, byte[] buf) throws IOException {
+        out.writeInt(buf.length);
+        out.write(buf);
+    }
+
+    public static void writeString(DataOutputStream out, String string) throws IOException {
+        writeByteArray(out, string.getBytes());
+    }
+
+    public static byte[] joinByteArrays(byte[][] byteArrays) {
+        int size = 0;
+        for (byte[] b : byteArrays)
+            size+=b.length;
+        byte[] allByteArray = new byte[size];
+
+        ByteBuffer buf = ByteBuffer.wrap(allByteArray);
+        for (byte[] b : byteArrays)
+            buf.put(b);
+
+        return buf.array();
+    }
+
+    public static PlainTicketCreds decryptTicket(byte[] ticketCipher, String ciphersuite, PrivateKey key) throws NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        Cipher c = Cipher.getInstance(ciphersuite);
+        c.init(Cipher.DECRYPT_MODE, key);
+        return (PlainTicketCreds) PlainMsgSAPKDP.deserialize(PlainMsgSAPKDP.Type.PB_TKCREDS.msgType, c.doFinal(ticketCipher));
+    }
+
+    public static byte[] encryptTicket(PlainTicketCreds ticket, String ciphersuite, PublicKey key) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException {
+        Cipher c = Cipher.getInstance(ciphersuite);
+        c.init(Cipher.ENCRYPT_MODE, key);
+        return c.doFinal(PlainMsgSAPKDP.serialize(ticket));
+    }
+
 
 
 }

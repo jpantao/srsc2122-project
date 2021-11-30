@@ -20,6 +20,7 @@ package proxybox;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.ClientSAPKDP;
+import sapkdp.messages.PlainTicketCreds;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -84,10 +85,14 @@ class hjUDPproxy {
         String sigserver = properties.getProperty("sigserver");
         String proxyBoxID = properties.getProperty("proxyBoxID");
 
-        //TODO: SAPKDP
-//        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-//        clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
-
+        // SAPKDP
+//        ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+//        client.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
+//
+//        PlainTicketCreds ticket = client.getClientTicket();
+//        byte[] rtssCipherTicket = client.getRtssCipherTicket();
+//        byte[] payloads = client.getPayloads();
+//        byte[] sigBytes = client.getSigBytes();
 
         ProxyHandshake handShake = new ProxyHandshake();
         handShake.start();
