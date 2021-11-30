@@ -14,6 +14,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
 public class SecureDatagramSocket extends DatagramSocket {
+    String options;
     private static final SecureRandom random = new SecureRandom();
     public static final int HEADER_SIZE = 5;
     private boolean noHMAC = false;
@@ -48,7 +49,7 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream("pt/unl/fct/srsc/common/config.properties");
+            inputStream = new FileInputStream("config/config.properties");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
             System.err.println("Configuration file not found!");
@@ -66,7 +67,7 @@ public class SecureDatagramSocket extends DatagramSocket {
 
         algorithm = properties.getProperty("algorithm");
 
-        String options = properties.getProperty("options");
+        options = properties.getProperty("options");
         if ((options.contains("CCM")) || (options.contains("GCM")))
             noHMAC = true;
         String hmac = properties.getProperty("hmac");
@@ -122,8 +123,13 @@ public class SecureDatagramSocket extends DatagramSocket {
         int ctLength = 0;
         try {
             if (noHMAC) {
-                ivSpec = Utils.createCtrIvForAES(random.nextInt(), random);
-                initCipher(Cipher.ENCRYPT_MODE, algorithm, ivSpec);
+                if (options.contains("GCM")) {
+                    ivSpec = Utils.createCtrIvForAES(random.nextInt(), random);
+                    initCipher(Cipher.ENCRYPT_MODE, algorithm, ivSpec);
+                } else {
+                    ivSpec = Utils.createCtrIvForCCM(random);
+                    initCipher(Cipher.ENCRYPT_MODE, algorithm, ivSpec);
+                }
             }
             ctLength = cipher.doFinal(datagramPacket.getData(), 0, datagramPacket.getLength(), cipherText, 0);
         } catch (ShortBufferException | IllegalBlockSizeException | BadPaddingException e) {
@@ -179,8 +185,13 @@ public class SecureDatagramSocket extends DatagramSocket {
 
 //        datagramPacket.getData()[59] = 4;
         if (noHMAC) {
-            ivBytes = new byte[16];
-            System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, ivBytes, 0, ivBytes.length);
+            if (options.contains("GCM")) {
+                ivBytes = new byte[16];
+                System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, ivBytes, 0, ivBytes.length);
+            } else {
+                ivBytes = new byte[13];
+                System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, ivBytes, 0, ivBytes.length);
+            }
         } else {
             byte[] messageHash = new byte[hMac.getMacLength()];
             System.arraycopy(datagramPacket.getData(), HEADER_SIZE + payloadSize, messageHash, 0, messageHash.length);

@@ -94,8 +94,8 @@ class hjUDPproxy {
 //        byte[] payloads = client.getPayloads();
 //        byte[] sigBytes = client.getSigBytes();
 
-        ProxyHandshake handShake = new ProxyHandshake();
-        handShake.start();
+//        ProxyHandshake handShake = new ProxyHandshake();
+//        handShake.start();
 
         SocketAddress inSocketAddress = parseSocketAddress(strserver);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
