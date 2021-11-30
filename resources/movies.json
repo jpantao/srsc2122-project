@@ -1,26 +1,18 @@
 {
   "cars": {
-    "name": "cars.dat",
     "ppvprice": 1,
-    "ciphersuite": "AES/CTR/NoPadding",
+    "ciphersuite": "AES/CTR/PKCS5Padding",
     "cryptoSA": "",
-    "keysize": 256,
-    "key": "TODO",
-    "iv": null,
-    "macsuite": "HMAC-SHA256",
-    "mackeysize": 256,
-    "mackey": "TODO"
+    "keyBytes": "e2e2d47f585cbeb617ddc0f8a7af7476c006e43bd9d927941c054049e7685686",
+    "macsuite": "HmacSHA512",
+    "mackeyBytes": "f8e7fb78124ebae77fe3c20211b298e983dee6d881bd02b4bf25cdf42c0883bf"
   },
   "monsters": {
-    "name": "monsters.dat",
     "ppvprice": 1,
-    "ciphersuite": "AES/CTR/NoPadding",
+    "ciphersuite": "AES/CTR/PKCS5Padding",
     "cryptoSA": "",
-    "keysize": 256,
-    "key": "TODO",
-    "iv": null,
-    "macsuite": "HMAC-SHA256",
-    "mackeysize": 256,
-    "mackey": "TODO"
+    "keyBytes": "e2e2d47f585cbeb617ddc0f8a7af7476c006e43bd9d927941c054049e7685686",
+    "macsuite": "HmacSHA512",
+    "mackeyBytes": "f8e7fb78124ebae77fe3c20211b298e983dee6d881bd02b4bf25cdf42c0883bf"
   }
 }

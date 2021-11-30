@@ -1,6 +1,8 @@
 package sapkdp.messages;
 
 
+import common.Utils;
+
 import java.io.*;
 
 
@@ -41,16 +43,12 @@ public class PlainPBHello extends PlainMsgSAPKDP {
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             DataOutputStream dao = new DataOutputStream(bao);
 
-
             try {
-                dao.writeInt(msg.userID.getBytes().length);
-                dao.write(msg.userID.getBytes());
-                dao.writeInt(msg.proxyBoxID.getBytes().length);
-                dao.write(msg.proxyBoxID.getBytes());
+                Utils.writeString(dao, msg.userID);
+                Utils.writeString(dao, msg.proxyBoxID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
 
             return bao.toByteArray();
         }
@@ -65,8 +63,8 @@ public class PlainPBHello extends PlainMsgSAPKDP {
             String proxyBoxID = "";
 
             try {
-                userID = getString(dai);
-                proxyBoxID = getString(dai);
+                userID = Utils.readSting(dai);
+                proxyBoxID = Utils.readSting(dai);
             } catch (IOException e) {
                 e.printStackTrace();
             }

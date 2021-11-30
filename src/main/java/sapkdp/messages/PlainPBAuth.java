@@ -1,6 +1,8 @@
 package sapkdp.messages;
 
 
+import common.Utils;
+
 import java.io.*;
 
 public class PlainPBAuth extends PlainMsgSAPKDP {
@@ -49,8 +51,7 @@ public class PlainPBAuth extends PlainMsgSAPKDP {
             try {
                 dao.writeInt(msg.n1Prime);
                 dao.writeInt(msg.n2);
-                dao.writeInt(msg.movieID.getBytes().length);
-                dao.write(msg.movieID.getBytes());
+                Utils.writeString(dao, msg.movieID);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -71,8 +72,7 @@ public class PlainPBAuth extends PlainMsgSAPKDP {
             try {
                 nonce1 = dai.readInt();
                 nonce2 = dai.readInt();
-                movieID = getString(dai);
-                System.out.println(movieID);
+                movieID = Utils.readSting(dai);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -4,12 +4,8 @@ import common.Utils;
 import extra.VoucherMinter;
 import sapkdp.messages.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import javax.crypto.*;
+import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +37,10 @@ public class ClientSAPKDP {
     private final Properties properties;
     private final Mac mac;
 
+
+    private PlainTicketCreds clientTicket;
+    private byte[] rtssCipherTicket;
+
     public ClientSAPKDP(String pboxID, String userID, String keystoreFile, char[] storepass, String userPW, String sigserverAddr) {
         this.sigserverAddr = sigserverAddr;
         this.pboxID = pboxID;
@@ -64,6 +64,13 @@ public class ClientSAPKDP {
         keyring.put(STRSERVER_ALIAS, Utils.getPubKey(keystoreFile, storepass, STRSERVER_ALIAS));
     }
 
+    public PlainTicketCreds getClientTicket() {
+        return clientTicket;
+    }
+
+    public byte[] getRtssCipherTicket() {
+        return rtssCipherTicket;
+    }
 
     public void handshake(String movieID, String coinFile) {
         String[] addr = sigserverAddr.split(":");
@@ -75,6 +82,7 @@ public class ClientSAPKDP {
 
             int msgType;
             byte[] payload;
+            byte[] sigBytes;
 
             // (round 1)
             PlainPBHello hello = new PlainPBHello(userID, pboxID);
@@ -98,7 +106,7 @@ public class ClientSAPKDP {
             // (round 4)
             msgType = PlainMsgSAPKDP.Type.SS_PAYREQ.msgType;
             payload = Utils.readConsumingHeader(in, msgType);
-            byte[] sigBytes = Utils.readSig(in);
+            sigBytes = Utils.readSig(in);
             if (!Utils.readVerifyingIntCheck(in, mac, payload))
                 throw new Exception("IntCheck4 failed");
             if (!Utils.verifySig(dsaSuite, provider, keyring.get(SIGSERVER_ALIAS), payload, sigBytes))
@@ -117,12 +125,29 @@ public class ClientSAPKDP {
             Utils.logSent(payment);
 
             //TODO: (round 6)
+            msgType = PlainMsgSAPKDP.Type.PB_TKCREDS.msgType;
+            payload = Utils.readConsumingHeader(in, msgType);
+            int clientTicketCipherSize = in.readInt();
+            int rtssTicketCipherSize = in.readInt();
+            sigBytes = Utils.readSig(in);
+            if (!Utils.readVerifyingIntCheck(in, mac, payload))
+                throw new Exception("IntCheck6 failed");
+            if (!Utils.verifySig(dsaSuite, provider, keyring.get(SIGSERVER_ALIAS), payload, sigBytes))
+                throw new Exception("Signature for ticket creds could not be verified");
+            byte[] cipherClientTC = extratBytes(payload, clientTicketCipherSize);
+            byte[] cipherRtssTC = extratBytes(payload, rtssTicketCipherSize);
+            PlainTicketCreds ticket = Utils.decryptTicket(cipherClientTC, properties.getProperty("asym-ciphersuite"),keyPair.getPrivate());
 
+            if (ticket.getNonce() != payment.getN4() + 1)
+                throw new Exception("n4' != n4+1");
+            Utils.logReceived(ticket);
+
+            this.clientTicket = ticket;
+            this.rtssCipherTicket = cipherRtssTC;
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
 
@@ -145,6 +170,14 @@ public class ClientSAPKDP {
         byte[] plaintext = PlainMsgSAPKDP.serialize(auth);
         return Utils.pbeCipher(Cipher.ENCRYPT_MODE, password, ciphersuite, provider, salt, counter, plaintext);
     }
+
+    private byte[] extratBytes(byte[] buf, int size) throws IOException {
+        byte[] extracted = new byte[size];
+        ByteArrayInputStream in = new ByteArrayInputStream(buf);
+        in.read(extracted);
+        return extracted;
+    }
+
 
 
 }

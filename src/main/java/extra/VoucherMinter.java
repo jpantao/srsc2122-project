@@ -107,11 +107,11 @@ public class VoucherMinter {
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF1_ALGO), Utils.decodeHexString(proof1)))
             return -1;
-        LOGGER.info(SHA_256_OK);
+//        LOGGER.info(SHA_256_OK);
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF2_ALGO), Utils.decodeHexString(proof2)))
             return -1;
-        LOGGER.info(RIPEMD_OK);
+//        LOGGER.info(RIPEMD_OK);
 
 
         toVerify = new ByteArrayOutputStream();

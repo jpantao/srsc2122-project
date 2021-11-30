@@ -3,6 +3,7 @@ package proxybox;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.ClientSAPKDP;
+import sapkdp.messages.PlainTicketCreds;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -70,20 +71,22 @@ class ProxyBox {
         argparse(args);
 
         Properties properties = Utils.loadConfig(proxyinfo);
-        String strserver = properties.getProperty("strserver");
+        int strserverPort = Integer.parseInt(properties.getProperty("strserverPort"));
         String mpegplayers = properties.getProperty("mpegplayers");
-        String sigserver = properties.getProperty("sigserver");
+        String sigserverAddr = properties.getProperty("sigserverAddr");
         String proxyBoxID = properties.getProperty("proxyBoxID");
 
         //TODO: SAPKDP
-        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
+        ClientSAPKDP clientSAPKDP = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserverAddr);
         clientSAPKDP.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
 
+        PlainTicketCreds ticket = clientSAPKDP.getClientTicket();
+        byte[] rtssCipherTicket = clientSAPKDP.getRtssCipherTicket();
 
         //TODO: SRTSP
 
 
-        SocketAddress inSocketAddress = parseSocketAddress(strserver);
+        SocketAddress inSocketAddress = parseSocketAddress("TODO" + ":" + strserverPort);
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(","))
                 .map(ProxyBox::parseSocketAddress)
                 .collect(Collectors.toSet());
