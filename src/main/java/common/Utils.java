@@ -113,7 +113,17 @@ public class Utils
         
         return new String(chars);
     }
-    
+
+    public static IvParameterSpec createCtrIvForCCM(
+        SecureRandom    random)
+    {
+        byte[]          ivBytes = new byte[13];
+
+        random.nextBytes(ivBytes);
+
+        return new IvParameterSpec(ivBytes);
+    }
+
     /**
      * Convete um array de caracteres de 8 bits numa string
      * 
