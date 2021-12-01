@@ -1,8 +1,8 @@
-package rtstp.messages;
+package srtsp.messages;
 
 import java.io.*;
 
-public class PlainRTSSSyncInitFrame extends PlainMsgRTSTP {
+public class PlainRTSSSyncInitFrame extends PlainMsgSRTSP {
 
     private final int na3Prime;
     private final int initMarkFrame;
@@ -29,10 +29,10 @@ public class PlainRTSSSyncInitFrame extends PlainMsgRTSTP {
                 '}';
     }
 
-    public static Serializer<PlainMsgRTSTP> serializer = new Serializer<PlainMsgRTSTP>() {
+    public static Serializer<PlainMsgSRTSP> serializer = new Serializer<PlainMsgSRTSP>() {
         @Override
-        public byte[] serialize(PlainMsgRTSTP plainMsgRTSTP) {
-            PlainRTSSSyncInitFrame msg = (PlainRTSSSyncInitFrame) plainMsgRTSTP;
+        public byte[] serialize(PlainMsgSRTSP plainMsgSRTSP) {
+            PlainRTSSSyncInitFrame msg = (PlainRTSSSyncInitFrame) plainMsgSRTSP;
 
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             DataOutputStream dao = new DataOutputStream(bao);
@@ -48,7 +48,7 @@ public class PlainRTSSSyncInitFrame extends PlainMsgRTSTP {
         }
 
         @Override
-        public PlainMsgRTSTP deserialize(byte[] buf) {
+        public PlainMsgSRTSP deserialize(byte[] buf) {
 
             ByteArrayInputStream bai = new ByteArrayInputStream(buf);
             DataInputStream dai = new DataInputStream(bai);

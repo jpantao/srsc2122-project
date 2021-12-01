@@ -1,8 +1,8 @@
-package rtstp.messages;
+package srtsp.messages;
 
 
 
-public abstract class PlainMsgRTSTP {
+public abstract class PlainMsgSRTSP {
 
     public enum Type {
         PB_REQ_N_AUTH(1, PlainPBReqAndCreds.serializer),
@@ -11,61 +11,61 @@ public abstract class PlainMsgRTSTP {
         RTSS_SYNC(4, PlainRTSSSyncInitFrame.serializer);
 
         public final int value;
-        private final Serializer<PlainMsgRTSTP> serializer;
+        private final Serializer<PlainMsgSRTSP> serializer;
 
-        private static final PlainMsgRTSTP.Type[] msgcodeIdx;
+        private static final PlainMsgSRTSP.Type[] msgcodeIdx;
 
         static {
             int maxMsgcode = -1;
-            for (PlainMsgRTSTP.Type type : PlainMsgRTSTP.Type.values())
+            for (PlainMsgSRTSP.Type type : PlainMsgSRTSP.Type.values())
                 maxMsgcode = Math.max(maxMsgcode, type.value);
-            msgcodeIdx = new PlainMsgRTSTP.Type[maxMsgcode + 1];
-            for (PlainMsgRTSTP.Type type : PlainMsgRTSTP.Type.values()) {
+            msgcodeIdx = new PlainMsgSRTSP.Type[maxMsgcode + 1];
+            for (PlainMsgSRTSP.Type type : PlainMsgSRTSP.Type.values()) {
                 if (msgcodeIdx[type.value] != null)
                     throw new IllegalStateException("Duplicate msgcode");
                 msgcodeIdx[type.value] = type;
             }
         }
 
-        Type(int value, Serializer<PlainMsgRTSTP> serializer) {
+        Type(int value, Serializer<PlainMsgSRTSP> serializer) {
             this.value = value;
             this.serializer = serializer;
         }
 
-        public static PlainMsgRTSTP.Type fromOpcode(int msgcode) {
+        public static PlainMsgSRTSP.Type fromOpcode(int msgcode) {
             if (msgcode >= msgcodeIdx.length || msgcode < 0)
                 throw new AssertionError(String.format("Unknown msgcode %d", msgcode));
-            PlainMsgRTSTP.Type t = msgcodeIdx[msgcode];
+            PlainMsgSRTSP.Type t = msgcodeIdx[msgcode];
             if (t == null)
                 throw new AssertionError(String.format("Unknown msgcode %d", msgcode));
             return t;
         }
     }
 
-    private final PlainMsgRTSTP.Type type;
+    private final PlainMsgSRTSP.Type type;
 
-    public PlainMsgRTSTP(PlainMsgRTSTP.Type type) {
+    public PlainMsgSRTSP(PlainMsgSRTSP.Type type) {
         this.type = type;
     }
 
-    public PlainMsgRTSTP.Type getType() {
+    public PlainMsgSRTSP.Type getType() {
         return type;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof PlainMsgRTSTP)) return false;
-        PlainMsgRTSTP msg = (PlainMsgRTSTP) o;
+        if (!(o instanceof PlainMsgSRTSP)) return false;
+        PlainMsgSRTSP msg = (PlainMsgSRTSP) o;
         return type == msg.type;
     }
 
-    public static byte[] serialize(PlainMsgRTSTP msg) {
+    public static byte[] serialize(PlainMsgSRTSP msg) {
         return msg.type.serializer.serialize(msg);
     }
 
-    public static PlainMsgRTSTP deserialize(int msgType, byte[] msg) {
-        PlainMsgRTSTP.Type type = PlainMsgRTSTP.Type.fromOpcode(msgType);
+    public static PlainMsgSRTSP deserialize(int msgType, byte[] msg) {
+        PlainMsgSRTSP.Type type = PlainMsgSRTSP.Type.fromOpcode(msgType);
         return type.serializer.deserialize(msg);
     }
 

@@ -94,11 +94,13 @@ class ProxyBox {
         byte[] payloads = client.getPayloads();
         byte[] sigBytes = client.getSigBytes();
 
-        String streamingAddr = ticket.getIp() + ":" + strserverPort;
-        ProxyHandshake handShake = new ProxyHandshake(streamingAddr, ticket.getClientPort());
+        DatagramSocket socket = new DatagramSocket(ticket.getClientPort());
+        ProxyHandshake handShake = new ProxyHandshake(socket, ticket.getIp(), strserverPort, payloads);
         handShake.start(rtssCipherTicket, sigBytes);
+        socket.close();
 
-        SocketAddress inSocketAddress = parseSocketAddress(ticket.getIp() + ":" + strserverPort);
+
+        SocketAddress inSocketAddress = parseSocketAddress(ticket.getIp() + ":" + ticket.getClientPort());
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
                 ProxyBox::parseSocketAddress).collect(Collectors.toSet());
 

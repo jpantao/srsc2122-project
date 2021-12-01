@@ -1,9 +1,9 @@
-package rtstp.messages;
+package srtsp.messages;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public class HeaderRTSTP {
+public class HeaderSRTSP {
 
     public static final int BYTE_LEN = 3;
 
@@ -11,13 +11,13 @@ public class HeaderRTSTP {
     private final int msgType;
     private final short payloadSize;
 
-    public HeaderRTSTP(int version, int msgType, short payloadSize) {
+    public HeaderSRTSP(int version, int msgType, short payloadSize) {
         this.version = version;
         this.msgType = msgType;
         this.payloadSize = payloadSize;
     }
 
-    public HeaderRTSTP(byte[] header) {
+    public HeaderSRTSP(byte[] header) {
         this.version = (header[0] & -16) >> 4;
         this.msgType = header[0] & 15;
 

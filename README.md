@@ -24,7 +24,7 @@ java -cp target/srsc-project.jar sigserver.SignalingServer <port>
 ### StreamServer
 Default port is 9999.
 ```
-java -cp target/srsc-project.jar strserver.StreamServer <port>
+java -cp target/srsc-project.jar strserver.hjStreamServer <port>
 ```
 
 ### ProxyBox

@@ -1,4 +1,4 @@
-package rtstp.messages;
+package srtsp.messages;
 
 public interface Serializer<T> {
 

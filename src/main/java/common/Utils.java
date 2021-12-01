@@ -1,8 +1,8 @@
 package common;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import rtstp.messages.HeaderRTSTP;
-import rtstp.messages.PlainMsgRTSTP;
+import srtsp.messages.HeaderSRTSP;
+import srtsp.messages.PlainMsgSRTSP;
 import sapkdp.messages.HeaderSAPKDP;
 import sapkdp.messages.PlainMsgSAPKDP;
 import sapkdp.messages.PlainTicketCreds;
@@ -281,8 +281,8 @@ public class Utils
         out.write(payload);
     }
 
-    public static void writeWithHeaderRTSTP(DataOutputStream out, int version, PlainMsgRTSTP.Type type, byte[] payload) throws IOException {
-        HeaderRTSTP header = new HeaderRTSTP(version, type.value, (short) payload.length);
+    public static void writeWithHeaderRTSTP(DataOutputStream out, int version, PlainMsgSRTSP.Type type, byte[] payload) throws IOException {
+        HeaderSRTSP header = new HeaderSRTSP(version, type.value, (short) payload.length);
         out.write(header.encode());
         out.write(payload);
     }

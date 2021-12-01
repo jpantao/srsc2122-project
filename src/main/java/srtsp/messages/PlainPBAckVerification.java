@@ -1,8 +1,8 @@
-package rtstp.messages;
+package srtsp.messages;
 
 import java.io.*;
 
-public class PlainPBAckVerification extends PlainMsgRTSTP {
+public class PlainPBAckVerification extends PlainMsgSRTSP {
 
     private final int n2Prime;
     private final int n3;
@@ -30,10 +30,10 @@ public class PlainPBAckVerification extends PlainMsgRTSTP {
                 '}';
     }
 
-    public static Serializer<PlainMsgRTSTP> serializer = new Serializer<PlainMsgRTSTP>() {
+    public static Serializer<PlainMsgSRTSP> serializer = new Serializer<PlainMsgSRTSP>() {
         @Override
-        public byte[] serialize(PlainMsgRTSTP plainMsgRTSTP) {
-            PlainPBAckVerification msg = (PlainPBAckVerification) plainMsgRTSTP;
+        public byte[] serialize(PlainMsgSRTSP plainMsgSRTSP) {
+            PlainPBAckVerification msg = (PlainPBAckVerification) plainMsgSRTSP;
 
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             DataOutputStream dao = new DataOutputStream(bao);
@@ -49,7 +49,7 @@ public class PlainPBAckVerification extends PlainMsgRTSTP {
         }
 
         @Override
-        public PlainMsgRTSTP deserialize(byte[] buf) {
+        public PlainMsgSRTSP deserialize(byte[] buf) {
 
             ByteArrayInputStream bai = new ByteArrayInputStream(buf);
             DataInputStream dai = new DataInputStream(bai);

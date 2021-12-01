@@ -1,10 +1,10 @@
-package rtstp.messages;
+package srtsp.messages;
 
 import common.Utils;
 
 import java.io.*;
 
-public class PlainPBReqAndCreds extends PlainMsgRTSTP {
+public class PlainPBReqAndCreds extends PlainMsgSRTSP {
 
     private final byte[] ticket;
     private final int na1;
@@ -32,10 +32,10 @@ public class PlainPBReqAndCreds extends PlainMsgRTSTP {
                 '}';
     }
 
-    public static Serializer<PlainMsgRTSTP> serializer = new Serializer<PlainMsgRTSTP>() {
+    public static Serializer<PlainMsgSRTSP> serializer = new Serializer<PlainMsgSRTSP>() {
         @Override
-        public byte[] serialize(PlainMsgRTSTP plainMsgRTSTP) {
-            PlainPBReqAndCreds msg = (PlainPBReqAndCreds) plainMsgRTSTP;
+        public byte[] serialize(PlainMsgSRTSP plainMsgSRTSP) {
+            PlainPBReqAndCreds msg = (PlainPBReqAndCreds) plainMsgSRTSP;
 
             ByteArrayOutputStream bao = new ByteArrayOutputStream();
             DataOutputStream dao = new DataOutputStream(bao);
@@ -51,7 +51,7 @@ public class PlainPBReqAndCreds extends PlainMsgRTSTP {
         }
 
         @Override
-        public PlainMsgRTSTP deserialize(byte[] buf) {
+        public PlainMsgSRTSP deserialize(byte[] buf) {
 
             ByteArrayInputStream bai = new ByteArrayInputStream(buf);
             DataInputStream dai = new DataInputStream(bai);

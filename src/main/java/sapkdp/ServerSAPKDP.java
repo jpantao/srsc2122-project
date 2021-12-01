@@ -38,7 +38,9 @@ public class ServerSAPKDP {
     private static JsonObject movies;
 
     public static ServerSAPKDP getInstance() {
-        return instance == null ? new ServerSAPKDP() : instance;
+        if(instance == null)
+            instance = new ServerSAPKDP();
+        return instance;
     }
 
     private ServerSAPKDP() {
@@ -124,9 +126,9 @@ public class ServerSAPKDP {
                 throw new Exception("Voucher value is insufficient");
 
 
-            int clientPort = ThreadLocalRandom.current().nextInt(5000, 6000);
-            PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), clientPort, payment.getN4() + 1);
-            PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), clientPort, payment.getN4() + 1);
+            int port = ThreadLocalRandom.current().nextInt(10000, 20000);
+            PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), port, payment.getN4() + 1);
+            PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), port, payment.getN4() + 1);
             byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"),keyring.get(PROXYBOX_ALIAS));
             byte[] rtssCipherTicket = Utils.encryptTicket(rtssTicket, properties.getProperty("asym-ciphersuite"),keyring.get(STRSERVER_ALIAS));
             byte[] payloads = Utils.joinByteArrays(new byte[][]{clientCipherTicket, rtssCipherTicket});
