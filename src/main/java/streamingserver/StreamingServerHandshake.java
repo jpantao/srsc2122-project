@@ -52,7 +52,7 @@ public class StreamingServerHandshake {
     }
 
     private void processRound1(DatagramPacket inPacket) {
-
+        System.out.println(Utils.encodeHexString(inPacket.getData()));
     }
 
     private DatagramPacket round2Packet() throws IOException {

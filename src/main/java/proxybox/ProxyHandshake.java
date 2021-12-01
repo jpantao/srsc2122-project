@@ -86,7 +86,7 @@ public class ProxyHandshake {
         Utils.logSent(msg);
 
         byte[] packet = baos.toByteArray();
-        return new DatagramPacket(packet, packet.length);
+        return new DatagramPacket(packet, packet.length, outSocketAddress);
     }
 
     private DatagramPacket round3Packet() throws IOException {
