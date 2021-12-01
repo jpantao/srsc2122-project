@@ -1,10 +1,17 @@
 # srsc2122-project (PA1)
 > A secure “pay-per-view” real-time media streaming system
 
+## Working
+- SAPKDP complete specefication working and tested. Some parameters can even be configured. Furthermore the SignalingServer supports multiple connections/clients.
+
 
 ## TODO
 - Fix integrity checks (currently they are only done over the payload excluding signatures)
-- Invalidate coin after use
+- Voucher blacklist
+- Nonce blacklist
+- Replace keystore files on code
+
+---
 
 ## Compiling
 The following command creates the [srsc-project.jar](target/srsc-project.jar) file with all the
