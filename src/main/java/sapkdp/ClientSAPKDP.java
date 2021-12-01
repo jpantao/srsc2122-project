@@ -5,7 +5,6 @@ import sapkdp.messages.*;
 
 import javax.crypto.*;
 import java.io.*;
-import java.net.DatagramSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.security.*;

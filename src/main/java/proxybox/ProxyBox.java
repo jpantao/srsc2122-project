@@ -44,7 +44,7 @@ class ProxyBox {
     private static char[] storepass;
     private static String proxyinfo;
     private static String movieID;
-
+    private static String voucherFile;
 
     private static void argparse(String[] args) {
         for (int i = 0; i < args.length; i++)
@@ -72,6 +72,9 @@ class ProxyBox {
                 case "-movie":
                     movieID = args[++i];
                     break;
+                case "-voucher":
+                    voucherFile = args[++i];
+                    break;
                 default:
                     System.err.println("Unknown option");
             }
@@ -93,7 +96,7 @@ class ProxyBox {
 
         // SAPKDP
         ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-        client.handshake(movieID, "resources/coin_3040021e1fa718b.voucher");
+        client.handshake(movieID, voucherFile);
 
         PlainTicketCreds ticket = client.getClientTicket();
         byte[] rtssCipherTicket = client.getRtssCipherTicket();

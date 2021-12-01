@@ -53,8 +53,8 @@ public class ProxyHandshake {
     }
 
     public void start(PlainTicketCreds plainTicket, byte[] ticket, byte[] sigBytes) throws Exception {
-        byte[] inBuffer = new byte[4 * 1024];
-        DatagramPacket inPacket = new DatagramPacket(inBuffer, inBuffer.length);
+        byte[] inBuffer;
+        DatagramPacket inPacket;
 
         try {
             // (round 1)
@@ -65,13 +65,18 @@ public class ProxyHandshake {
             socket.close();
             System.out.println("listen port " + plainTicket.getPort());
             socket = Utils.secureDatagramSocketWithReusableAddress(plainTicket.getPort());
+            inBuffer = new byte[4 * 1024];
+            inPacket = new DatagramPacket(inBuffer, inBuffer.length);
             socket.receive(inPacket);
             PlainRTSSVerification verification = processRound2(inPacket);
 
             // (round 3)
             socket.send(round3Packet(verification.getNa2(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
 
+
             // (round 4)
+            inBuffer = new byte[4 * 1024];
+            inPacket = new DatagramPacket(inBuffer, inBuffer.length);
             socket.receive(inPacket);
             PlainRTSSSyncInitFrame syncInitFrame = processRound4(inPacket);
 
