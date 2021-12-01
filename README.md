@@ -22,7 +22,7 @@
 
 - AES/CTR/NoPadding HmacSHA512
 
-## Additional Notes
+### Additional Notes
 
 - Registered users' database can be found in [users.json](resources/users.json) ;
 - Available movies' database can be found in [movies.json](resources/movies.json);
