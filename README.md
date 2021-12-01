@@ -28,7 +28,9 @@
 - Available movies' database can be found in [movies.json](resources/movies.json);
 - Configuration files are under the [config](config) directory;
 - Keystore files are under the [keystores](keystores) directory;
-- Movie files are under the [movies](movies) directory.
+- Movie files are under the [movies](movies) directory;
+- Ciphersuites tested:
+  - AES/CTR/NoPadding HmacSHA512.
 
 ## TODO
 
