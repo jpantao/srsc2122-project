@@ -7,7 +7,7 @@
 ### SAPKDP
 
 - SAPKDP complete specification working and tested (only added the movieID field to the ticket);
-- Runs on top of TCP only;
+- Runs over TCP only;
 - Some parameters can be configured in the [config file](config/sapkdp.properties);
 - SignalingServer supports multiple concurrent connections/clients;
 - Alterations:
@@ -16,7 +16,7 @@
 ### RTSTP
 
 - RTSTP complete specification;
-- Runs on top of UDP only;
+- Runs over UDP only;
 - The server supports only one movie request.
 
 ### Ciphersuites tested:
