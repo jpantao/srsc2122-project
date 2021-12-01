@@ -66,7 +66,7 @@ java -cp target/srsc-project.jar sigserver.SignalingServer <port>
 java -cp target/srsc-project.jar sigserver.SignalingServer
 ```
 
-### StreamServer
+### StreamingServer
 
 Default port is 9999. Any changes should also be reflected in the [proxybox.properties](config/proxybox.properties)
 file.
