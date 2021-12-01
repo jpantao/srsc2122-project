@@ -1,4 +1,4 @@
-# srsc2122-project (PA1)
+# srsc2122-project (PA1 - Phase 2)
 
 > A secure “pay-per-view” real-time media streaming system
 
