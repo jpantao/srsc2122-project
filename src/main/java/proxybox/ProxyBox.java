@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 class ProxyBox {
 
-
+    public static final String DEFAULT_MOVIE = "monsters";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
     private static String username;
@@ -43,6 +43,7 @@ class ProxyBox {
     private static String keystore;
     private static char[] storepass;
     private static String proxyinfo;
+    private static String movieID;
 
 
     private static void argparse(String[] args) {
@@ -68,11 +69,16 @@ class ProxyBox {
                 case "-storepass":
                     storepass = args[++i].toCharArray();
                     break;
+                case "-movie":
+                    movieID = args[++i];
+                    break;
                 default:
                     System.err.println("Unknown option");
             }
         if (storepass == null)
             storepass = KEYSTORE_PASS;
+        if (movieID == null)
+            movieID = DEFAULT_MOVIE;
 
     }
 
@@ -87,24 +93,22 @@ class ProxyBox {
 
         // SAPKDP
         ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
-        client.handshake("cars", "resources/coin_3040021e1fa718b.voucher");
+        client.handshake(movieID, "resources/coin_3040021e1fa718b.voucher");
 
         PlainTicketCreds ticket = client.getClientTicket();
         byte[] rtssCipherTicket = client.getRtssCipherTicket();
         byte[] payloads = client.getPayloads();
         byte[] sigBytes = client.getSigBytes();
 
-        DatagramSocket socket = new DatagramSocket(ticket.getClientPort());
-        ProxyHandshake handShake = new ProxyHandshake(socket, ticket.getIp(), strserverPort, payloads);
+        ProxyHandshake handShake = new ProxyHandshake(ticket.getIp(), ticket.getPort(), strserverPort, payloads);
         handShake.start(ticket, rtssCipherTicket, sigBytes);
-        socket.close();
 
 
-        SocketAddress inSocketAddress = parseSocketAddress(ticket.getIp() + ":" + ticket.getClientPort());
+//        SocketAddress inSocketAddress = parseSocketAddress(ticket.getIp() + ":" + ticket.getPort());
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
                 ProxyBox::parseSocketAddress).collect(Collectors.toSet());
 
-        SecureDatagramSocket inSocket = new SecureDatagramSocket(inSocketAddress);
+        SecureDatagramSocket inSocket = Utils.secureDatagramSocketWithReusableAddress(ticket.getPort());
         DatagramSocket outSocket = new DatagramSocket();
         byte[] buffer = new byte[4 * 1024];
 

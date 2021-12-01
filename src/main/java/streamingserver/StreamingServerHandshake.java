@@ -3,16 +3,11 @@ package streamingserver;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.messages.PlainTicketCreds;
-import srtsp.messages.PlainMsgSRTSP;
-import srtsp.messages.PlainPBReqAndCreds;
-import srtsp.messages.PlainRTSSVerification;
+import srtsp.messages.*;
 
 import javax.crypto.Mac;
 import java.io.*;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
+import java.net.*;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.HashMap;
@@ -37,9 +32,15 @@ public class StreamingServerHandshake {
     private final Properties properties;
     private static Mac mac;
 
+    private int expectedNonce;
+
     private DatagramSocket socket;
     private Map<String, PublicKey> keyring;
     private KeyPair keyPair;
+
+    private String ip;
+    private int port;
+    private String movieID;
 
     public StreamingServerHandshake(String keystoreFile, char[] storepass, int port) throws IOException {
         Utils.loadBC();
@@ -62,6 +63,18 @@ public class StreamingServerHandshake {
         keyring.put(SIGSERVER_ALIAS, Utils.getPubKey(keystoreFile, storepass, SIGSERVER_ALIAS));
     }
 
+    public String getIp() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getMovieID() {
+        return movieID;
+    }
+
     public void go() {
 
         byte[] inBuffer = new byte[4 * 1024];
@@ -72,26 +85,60 @@ public class StreamingServerHandshake {
             // (round 1)
             socket.receive(inPacket);
             PlainPBReqAndCreds reqAndCreds = processRound1(inPacket);
+//            System.out.println("ticket bytes=" + Utils.encodeHexString(reqAndCreds.getTicket()));
             PlainTicketCreds ticket = Utils.decryptTicket(reqAndCreds.getTicket(), properties.getProperty("asym-ciphersuite"), keyPair.getPrivate());
             Utils.logReceived(ticket);
 
-            //TODO: (round 2)
-            //change port for socket simulating connections (helps adding multiple client support in the future)
-            writeCryptoConf(ticket);
-            socket = new SecureDatagramSocket(socket.getLocalSocketAddress());
-            socket.send(round2Packet(reqAndCreds, ticket.getIp(), ticket.getClientPort()));
+            // (round 2)
+            //change port for socket simulating connections (helps multiple client support in the future)
+            Utils.writeCryptoConf(ticket, CRYPTOCONF_FILE);
+            System.out.println("listen port " + ticket.getPort());
+            socket = new SecureDatagramSocket(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), ticket.getPort()));
+            socket.send(round2Packet(reqAndCreds.getNa1(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
 
-            //TODO: (round 3)
-            //TODO: (round 4)
+            // (round 3)
+            socket.receive(inPacket);
+            PlainPBAckVerification verificationAck = processRound3(inPacket);
+
+            // (round 4)
+            socket.send(round4Packet(verificationAck.getN3(),  inPacket.getAddress().getHostAddress(), inPacket.getPort()));
+
+
+            ip = inPacket.getAddress().getHostAddress();
+            port = inPacket.getPort();
+            movieID = ticket.getMovieID();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+
+
     }
 
-    private void processRound3(DatagramPacket inPacket) {
+    private DatagramPacket round4Packet(int na3, String ip, int port) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream dos = new DataOutputStream(baos);
+        PlainRTSSSyncInitFrame msg = new PlainRTSSSyncInitFrame(na3 + 1, 0);
+        Utils.writeWithHeaderRTSTP(dos, VERSION, msg.getType(), PlainMsgSRTSP.serialize(msg));
+        byte[] packet = baos.toByteArray();
+        Utils.logSent(msg);
+        System.out.println(ip + port);
+        return new DatagramPacket(packet, packet.length, InetAddress.getByName(ip), port);
+    }
 
+    private PlainPBAckVerification processRound3(DatagramPacket inPacket) throws Exception {
+        ByteArrayInputStream bai = new ByteArrayInputStream(inPacket.getData());
+        DataInputStream dai = new DataInputStream(bai);
 
+        int msgType = PlainMsgSRTSP.Type.PB_VER_ACK.value;
+        byte[] payload = Utils.readConsumingHeader(dai, msgType);
+        PlainPBAckVerification verificationAck = (PlainPBAckVerification) PlainMsgSRTSP.deserialize(msgType, payload);
+
+        if (verificationAck.getN2Prime() != expectedNonce)
+            throw new Exception("na2' != na2 + 1");
+        Utils.logReceived(verificationAck);
+
+        return verificationAck;
     }
 
     private PlainPBReqAndCreds processRound1(DatagramPacket inPacket) throws Exception {
@@ -114,55 +161,18 @@ public class StreamingServerHandshake {
         return msg;
     }
 
-    private DatagramPacket round2Packet(PlainPBReqAndCreds reqAndCreds, String ip, int port) throws IOException {
+    private DatagramPacket round2Packet(int na1, String ip, int port) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
         int na2 = ThreadLocalRandom.current().nextInt();
-        PlainRTSSVerification msg = new PlainRTSSVerification(reqAndCreds.getNa1()+1, na2, true);
-        dos.write(PlainMsgSRTSP.serialize(msg));
+        expectedNonce = na2 + 1;
+        PlainRTSSVerification msg = new PlainRTSSVerification(na1 + 1, na2, true);
+        Utils.writeWithHeaderRTSTP(dos, VERSION, msg.getType(), PlainMsgSRTSP.serialize(msg));
         byte[] packet = baos.toByteArray();
         Utils.logSent(msg);
+        System.out.println(ip + port);
         return new DatagramPacket(packet, packet.length, InetAddress.getByName(ip), port);
     }
 
 
-    private static InetSocketAddress parseSocketAddress(String socketAddress) {
-        String[] split = socketAddress.split(":");
-        String host = split[0];
-        int port = Integer.parseInt(split[1]);
-        return new InetSocketAddress(host, port);
-    }
-
-
-
-    private void writeCryptoConf(PlainTicketCreds ticket){
-        Properties prop = new Properties();
-        prop.setProperty("algorithm",  ticket.getCiphersuiteConf().split("/")[0]);
-        prop.setProperty("options", ticket.getCiphersuiteConf());
-        prop.setProperty("ivBytes", ticket.getCryptoSA());
-        prop.setProperty("keyBytes", Utils.encodeHexString(ticket.getSessionkeyBytes()));
-        prop.setProperty("hmac", ticket.getMacsuite());
-        prop.setProperty("hmacBytes", Utils.encodeHexString(ticket.getMackeyBytes()));
-
-        try {
-            prop.store(new FileOutputStream(CRYPTOCONF_FILE), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-//    private DatagramPacket makePacket(byte[] data, int msgType) throws IOException {
-//        byte[] outBuffer = new byte[4 * 1024];
-//        DatagramPacket outPacket = new DatagramPacket(outBuffer, outBuffer.length, outSocketAddress );
-//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//        DataOutputStream dos = new DataOutputStream(baos);
-//        baos.write(VERSION);
-//        baos.write(msgType);
-//        baos.write(data);
-//        baos.flush();
-//        outPacket.setData(baos.toByteArray(), 0, baos.size());
-//        dos.close();
-//        baos.close();
-//        return outPacket;
-//    }
 }

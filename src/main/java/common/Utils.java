@@ -13,6 +13,7 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -454,5 +455,28 @@ public class Utils
         c.init(Cipher.ENCRYPT_MODE, key);
         return c.doFinal(PlainMsgSAPKDP.serialize(ticket));
     }
+
+    public static SecureDatagramSocket secureDatagramSocketWithReusableAddress(int port) throws IOException, InterruptedException {
+        SecureDatagramSocket newSocket = new SecureDatagramSocket(null);
+        newSocket.setReuseAddress(true);
+        newSocket.bind(new InetSocketAddress(port));
+        return newSocket;
+    }
+
+    public static void writeCryptoConf(PlainTicketCreds ticket, String filename) {
+        Properties prop = new Properties();
+        prop.setProperty("algorithm", ticket.getCiphersuiteConf().split("/")[0]);
+        prop.setProperty("options", ticket.getCiphersuiteConf());
+        prop.setProperty("ivBytes", ticket.getCryptoSA());
+        prop.setProperty("keyBytes", Utils.encodeHexString(ticket.getSessionkeyBytes()));
+        prop.setProperty("hmac", ticket.getMacsuite());
+        prop.setProperty("hmacBytes", Utils.encodeHexString(ticket.getMackeyBytes()));
+        try {
+            prop.store(new FileOutputStream(filename), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
 }

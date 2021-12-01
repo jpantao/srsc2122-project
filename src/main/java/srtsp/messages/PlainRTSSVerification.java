@@ -23,7 +23,7 @@ public class PlainRTSSVerification extends PlainMsgSRTSP {
         return na2;
     }
 
-    public boolean isTicketValidity() {
+    public boolean isTicketValid() {
         return ticketValidity;
     }
 

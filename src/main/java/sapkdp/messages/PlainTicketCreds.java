@@ -4,10 +4,12 @@ package sapkdp.messages;
 import common.Utils;
 
 import java.io.*;
+import java.util.Arrays;
 
 
 public class PlainTicketCreds extends PlainMsgSAPKDP {
 
+    private final String movieID;
     private final String ip;
     private final int clientPort;
     private final String ciphersuiteConf;
@@ -17,8 +19,9 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
     private final byte[] mackeyBytes;
     private final int nonce;
 
-    public PlainTicketCreds(String ip, int clientPort, String ciphersuiteConf, String cryptoSA, byte[] sessionkeyBytes, String macsuite, byte[] mackeyBytes, int nonce) {
+    public PlainTicketCreds(String movieID, String ip, int clientPort, String ciphersuiteConf, String cryptoSA, byte[] sessionkeyBytes, String macsuite, byte[] mackeyBytes, int nonce) {
         super(Type.PB_TKCREDS);
+        this.movieID = movieID;
         this.ip = ip;
         this.clientPort = clientPort;
         this.ciphersuiteConf = ciphersuiteConf;
@@ -29,11 +32,15 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
         this.nonce = nonce;
     }
 
+    public String getMovieID() {
+        return movieID;
+    }
+
     public String getIp() {
         return ip;
     }
 
-    public int getClientPort() {
+    public int getPort() {
         return clientPort;
     }
 
@@ -65,12 +72,13 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
     @Override
     public String toString() {
         return "PlainTicketCreds{" +
-                "ip='" + ip + '\'' +
-                ", port=" + clientPort +
+                "movieID='" + movieID + '\'' +
+                ", ip='" + ip + '\'' +
+                ", clientPort=" + clientPort +
                 ", ciphersuiteConf='" + ciphersuiteConf + '\'' +
                 ", cryptoSA='" + cryptoSA + '\'' +
                 ", sessionkeyBytes=" + Utils.encodeHexString(sessionkeyBytes) +
-                ", macsuite=" + macsuite +
+                ", macsuite='" + macsuite + '\'' +
                 ", mackeyBytes=" + Utils.encodeHexString(mackeyBytes) +
                 ", nonce=" + nonce +
                 '}';
@@ -85,6 +93,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             DataOutputStream dao = new DataOutputStream(bao);
 
             try {
+                Utils.writeString(dao, msg.movieID);
                 Utils.writeString(dao, msg.ip);
                 dao.writeInt(msg.clientPort);
                 Utils.writeString(dao, msg.ciphersuiteConf);
@@ -106,6 +115,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             ByteArrayInputStream bai = new ByteArrayInputStream(buf);
             DataInputStream dai = new DataInputStream(bai);
 
+            String movieID = "";
             String ip = "";
             int port = 0;
             String ciphersuiteConf = "";
@@ -116,6 +126,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             int nonce = 0;
 
             try {
+                movieID = Utils.readSting(dai);
                 ip = Utils.readSting(dai);
                 port = dai.readInt();
                 ciphersuiteConf = Utils.readSting(dai);
@@ -128,7 +139,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
                 e.printStackTrace();
             }
 
-            return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
+            return new PlainTicketCreds(movieID, ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
         }
 
 

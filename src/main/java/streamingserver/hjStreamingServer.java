@@ -37,11 +37,11 @@ class hjStreamingServer {
         int size;
         int count = 0;
         long time;
-        DataInputStream g = new DataInputStream(new FileInputStream(args[0]));
+        DataInputStream g = new DataInputStream(new FileInputStream(MOVIES_DIR + "/" + handShake.getMovieID() + ".dat"));
         byte[] buff = new byte[4096];
 
         SecureDatagramSocket s = new SecureDatagramSocket();
-        InetSocketAddress addr = new InetSocketAddress(args[1], Integer.parseInt(args[2]));
+        InetSocketAddress addr = new InetSocketAddress(handShake.getIp(), handShake.getPort());
         DatagramPacket p = new DatagramPacket(buff, buff.length, addr);
         long t0 = System.nanoTime(); // tempo de referencia para este processo
         long q0 = 0;

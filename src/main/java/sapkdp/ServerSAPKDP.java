@@ -38,7 +38,7 @@ public class ServerSAPKDP {
     private static JsonObject movies;
 
     public static ServerSAPKDP getInstance() {
-        if(instance == null)
+        if (instance == null)
             instance = new ServerSAPKDP();
         return instance;
     }
@@ -126,11 +126,13 @@ public class ServerSAPKDP {
                 throw new Exception("Voucher value is insufficient");
 
 
-            int port = ThreadLocalRandom.current().nextInt(10000, 20000);
-            PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), port, payment.getN4() + 1);
-            PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), port, payment.getN4() + 1);
-            byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"),keyring.get(PROXYBOX_ALIAS));
-            byte[] rtssCipherTicket = Utils.encryptTicket(rtssTicket, properties.getProperty("asym-ciphersuite"),keyring.get(STRSERVER_ALIAS));
+            int clientPort = ThreadLocalRandom.current().nextInt(10000, 19999);
+            int serverPort = ThreadLocalRandom.current().nextInt(20000, 29999);
+            PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), clientPort, payment.getN4() + 1);
+            PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), serverPort, payment.getN4() + 1);
+            byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"), keyring.get(PROXYBOX_ALIAS));
+            byte[] rtssCipherTicket = Utils.encryptTicket(rtssTicket, properties.getProperty("asym-ciphersuite"), keyring.get(STRSERVER_ALIAS));
+//            System.out.println("ticket bytes="+Utils.encodeHexString(rtssCipherTicket));
             byte[] payloads = Utils.joinByteArrays(new byte[][]{clientCipherTicket, rtssCipherTicket});
             Utils.writeWithHeaderSAPKDP(out, VERSION, PlainMsgSAPKDP.Type.PB_TKCREDS, payloads);
             out.writeInt(clientCipherTicket.length); // send client ticket cipher size
@@ -165,7 +167,7 @@ public class ServerSAPKDP {
         byte[] sessionkeyBytes = Utils.decodeHexString(movie.get("keyBytes").getAsString());
         byte[] mackeyBytes = Utils.decodeHexString(movie.get("mackeyBytes").getAsString());
         String macsuite = movie.get("macsuite").getAsString();
-        return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
+        return new PlainTicketCreds(movieID, ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
     }
 
 

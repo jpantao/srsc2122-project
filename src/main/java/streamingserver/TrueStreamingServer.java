@@ -13,7 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.util.Properties;
 
-class StreamingServer {
+class TrueStreamingServer {
 
     public static final String CONFIG_FILE = "config/strserver.properties";
     public static final int BUF_SIZE = 4096;
