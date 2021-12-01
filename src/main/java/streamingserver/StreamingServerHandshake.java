@@ -1,27 +1,31 @@
 package streamingserver;
 
+import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.messages.PlainTicketCreds;
 import srtsp.messages.PlainMsgSRTSP;
 import srtsp.messages.PlainPBReqAndCreds;
-import sun.security.krb5.internal.Ticket;
+import srtsp.messages.PlainRTSSVerification;
 
 import javax.crypto.Mac;
 import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ThreadLocalRandom;
 
 
 public class StreamingServerHandshake {
 
     private static final int VERSION = 1;
     public static final String CONFIG_FILE = "config/srtsp.properties";
+    public static final String CRYPTOCONF_FILE = "config/config.properties";
 
     //TODO: convert alias to args or props! Furthermore, proxybox key alias should be the ProxyBox's ID
     // Pubkey aliases: coinissuer, proxybox, streamingserver e signalingserver
@@ -33,7 +37,7 @@ public class StreamingServerHandshake {
     private final Properties properties;
     private static Mac mac;
 
-    private  DatagramSocket socket;
+    private DatagramSocket socket;
     private Map<String, PublicKey> keyring;
     private KeyPair keyPair;
 
@@ -58,7 +62,7 @@ public class StreamingServerHandshake {
         keyring.put(SIGSERVER_ALIAS, Utils.getPubKey(keystoreFile, storepass, SIGSERVER_ALIAS));
     }
 
-    public void go()  {
+    public void go() {
 
         byte[] inBuffer = new byte[4 * 1024];
         DatagramPacket inPacket = new DatagramPacket(inBuffer, inBuffer.length);
@@ -68,10 +72,14 @@ public class StreamingServerHandshake {
             // (round 1)
             socket.receive(inPacket);
             PlainPBReqAndCreds reqAndCreds = processRound1(inPacket);
-            PlainTicketCreds ticket= Utils.decryptTicket(reqAndCreds.getTicket(), properties.getProperty("asym-ciphersuite"), keyPair.getPrivate());
+            PlainTicketCreds ticket = Utils.decryptTicket(reqAndCreds.getTicket(), properties.getProperty("asym-ciphersuite"), keyPair.getPrivate());
+            Utils.logReceived(ticket);
 
             //TODO: (round 2)
-            socket = new DatagramSocket(ticket.getClientPort());
+            //change port for socket simulating connections (helps adding multiple client support in the future)
+            writeCryptoConf(ticket);
+            socket = new SecureDatagramSocket(socket.getLocalSocketAddress());
+            socket.send(round2Packet(reqAndCreds, ticket.getIp(), ticket.getClientPort()));
 
             //TODO: (round 3)
             //TODO: (round 4)
@@ -106,13 +114,15 @@ public class StreamingServerHandshake {
         return msg;
     }
 
-    private DatagramPacket round2Packet() throws IOException {
+    private DatagramPacket round2Packet(PlainPBReqAndCreds reqAndCreds, String ip, int port) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-
-
-
-        return null;
+        int na2 = ThreadLocalRandom.current().nextInt();
+        PlainRTSSVerification msg = new PlainRTSSVerification(reqAndCreds.getNa1()+1, na2, true);
+        dos.write(PlainMsgSRTSP.serialize(msg));
+        byte[] packet = baos.toByteArray();
+        Utils.logSent(msg);
+        return new DatagramPacket(packet, packet.length, InetAddress.getByName(ip), port);
     }
 
 
@@ -121,6 +131,24 @@ public class StreamingServerHandshake {
         String host = split[0];
         int port = Integer.parseInt(split[1]);
         return new InetSocketAddress(host, port);
+    }
+
+
+
+    private void writeCryptoConf(PlainTicketCreds ticket){
+        Properties prop = new Properties();
+        prop.setProperty("algorithm",  ticket.getCiphersuiteConf().split("/")[0]);
+        prop.setProperty("options", ticket.getCiphersuiteConf());
+        prop.setProperty("ivBytes", ticket.getCryptoSA());
+        prop.setProperty("keyBytes", Utils.encodeHexString(ticket.getSessionkeyBytes()));
+        prop.setProperty("hmac", ticket.getMacsuite());
+        prop.setProperty("hmacBytes", Utils.encodeHexString(ticket.getMackeyBytes()));
+
+        try {
+            prop.store(new FileOutputStream(CRYPTOCONF_FILE), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 //    private DatagramPacket makePacket(byte[] data, int msgType) throws IOException {

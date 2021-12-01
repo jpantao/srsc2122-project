@@ -1,6 +1,8 @@
 package proxybox;
 
+import common.SecureDatagramSocket;
 import common.Utils;
+import sapkdp.messages.PlainTicketCreds;
 import srtsp.messages.PlainMsgSRTSP;
 import srtsp.messages.PlainPBReqAndCreds;
 
@@ -14,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class ProxyHandshake {
 
     private static final String CONFIG_FILE = "config/srtsp.properties";
+    public static final String CRYPTOCONF_FILE = "config/config.properties";
 
     private static final int VERSION = 1;
     private static final SecureRandom random = new SecureRandom();
@@ -21,7 +24,7 @@ public class ProxyHandshake {
 
     private final Properties properties;
     private final Mac mac;
-    private final DatagramSocket socket;
+    private DatagramSocket socket;
     private final int servicePort;
     private final InetAddress serverAddr;
 
@@ -40,7 +43,7 @@ public class ProxyHandshake {
         this.payloadUsedInSignature = payloadUsedInSignature;
     }
 
-    public void start(byte[] ticket, byte[] sigBytes) throws IOException {
+    public void start(PlainTicketCreds plainTicket, byte[] ticket, byte[] sigBytes) throws IOException {
         byte[] inBuffer = new byte[4 * 1024];
         DatagramPacket inPacket = new DatagramPacket(inBuffer, inBuffer.length);
 
@@ -48,6 +51,8 @@ public class ProxyHandshake {
         socket.send(round1Packet(ticket, sigBytes));
 
         //TODO: (round 2)
+        writeCryptoConf(plainTicket);
+        socket = new SecureDatagramSocket(socket.getLocalSocketAddress());
         socket.receive(inPacket);
         processRound2(inPacket);
 
@@ -57,7 +62,7 @@ public class ProxyHandshake {
     }
 
     private void processRound2(DatagramPacket inPacket) {
-
+        System.out.println(inPacket);
     }
 
 
@@ -95,6 +100,19 @@ public class ProxyHandshake {
     }
 
 
-
+    private void writeCryptoConf(PlainTicketCreds ticket){
+        Properties prop = new Properties();
+        prop.setProperty("algorithm",  ticket.getCiphersuiteConf().split("/")[0]);
+        prop.setProperty("options", ticket.getCiphersuiteConf());
+        prop.setProperty("ivBytes", ticket.getCryptoSA());
+        prop.setProperty("keyBytes", Utils.encodeHexString(ticket.getSessionkeyBytes()));
+        prop.setProperty("hmac", ticket.getMacsuite());
+        prop.setProperty("hmacBytes", Utils.encodeHexString(ticket.getMackeyBytes()));
+        try {
+            prop.store(new FileOutputStream(CRYPTOCONF_FILE), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

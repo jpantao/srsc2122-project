@@ -164,8 +164,8 @@ public class ServerSAPKDP {
         String cryptoSA = movie.get("cryptoSA").getAsString();
         byte[] sessionkeyBytes = Utils.decodeHexString(movie.get("keyBytes").getAsString());
         byte[] mackeyBytes = Utils.decodeHexString(movie.get("mackeyBytes").getAsString());
-
-        return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, mackeyBytes, nonce);
+        String macsuite = movie.get("macsuite").getAsString();
+        return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
     }
 
 

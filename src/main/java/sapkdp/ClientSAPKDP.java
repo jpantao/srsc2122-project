@@ -5,6 +5,7 @@ import sapkdp.messages.*;
 
 import javax.crypto.*;
 import java.io.*;
+import java.net.DatagramSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.security.*;
@@ -145,8 +146,14 @@ public class ClientSAPKDP {
                 throw new Exception("Signature for ticket creds could not be verified");
 
             this.sigBytes = sigBytes;
-            byte[] cipherClientTC = extractBytes(payload, clientTicketCipherSize);
-            byte[] cipherRtssTC = extractBytes(payload, rtssTicketCipherSize);
+
+            ByteArrayInputStream bai = new ByteArrayInputStream(payload);
+            DataInputStream dai = new DataInputStream(bai);
+            byte[] cipherClientTC = new byte[clientTicketCipherSize];
+            dai.read(cipherClientTC);
+            byte[] cipherRtssTC = new byte[rtssTicketCipherSize];
+            dai.read(cipherRtssTC);
+
             PlainTicketCreds ticket = Utils.decryptTicket(cipherClientTC, properties.getProperty("asym-ciphersuite"),keyPair.getPrivate());
 
             if (ticket.getNonce() != payment.getN4() + 1)

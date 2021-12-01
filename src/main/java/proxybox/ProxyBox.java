@@ -96,7 +96,7 @@ class ProxyBox {
 
         DatagramSocket socket = new DatagramSocket(ticket.getClientPort());
         ProxyHandshake handShake = new ProxyHandshake(socket, ticket.getIp(), strserverPort, payloads);
-        handShake.start(rtssCipherTicket, sigBytes);
+        handShake.start(ticket, rtssCipherTicket, sigBytes);
         socket.close();
 
 

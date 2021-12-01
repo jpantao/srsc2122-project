@@ -13,16 +13,18 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
     private final String ciphersuiteConf;
     private final String cryptoSA;
     private final byte[] sessionkeyBytes;
+    private final String macsuite;
     private final byte[] mackeyBytes;
     private final int nonce;
 
-    public PlainTicketCreds(String ip, int clientPort, String ciphersuiteConf, String cryptoSA, byte[] sessionkeyBytes, byte[] mackeyBytes, int nonce) {
+    public PlainTicketCreds(String ip, int clientPort, String ciphersuiteConf, String cryptoSA, byte[] sessionkeyBytes, String macsuite, byte[] mackeyBytes, int nonce) {
         super(Type.PB_TKCREDS);
         this.ip = ip;
         this.clientPort = clientPort;
         this.ciphersuiteConf = ciphersuiteConf;
         this.cryptoSA = cryptoSA;
         this.sessionkeyBytes = sessionkeyBytes;
+        this.macsuite = macsuite;
         this.mackeyBytes = mackeyBytes;
         this.nonce = nonce;
     }
@@ -47,6 +49,10 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
         return sessionkeyBytes;
     }
 
+    public String getMacsuite() {
+        return macsuite;
+    }
+
     public byte[] getMackeyBytes() {
         return mackeyBytes;
     }
@@ -64,6 +70,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
                 ", ciphersuiteConf='" + ciphersuiteConf + '\'' +
                 ", cryptoSA='" + cryptoSA + '\'' +
                 ", sessionkeyBytes=" + Utils.encodeHexString(sessionkeyBytes) +
+                ", macsuite=" + macsuite +
                 ", mackeyBytes=" + Utils.encodeHexString(mackeyBytes) +
                 ", nonce=" + nonce +
                 '}';
@@ -83,6 +90,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
                 Utils.writeString(dao, msg.ciphersuiteConf);
                 Utils.writeString(dao, msg.cryptoSA);
                 Utils.writeByteArray(dao, msg.sessionkeyBytes);
+                Utils.writeString(dao, msg.macsuite);
                 Utils.writeByteArray(dao, msg.mackeyBytes);
                 dao.writeInt(msg.nonce);
             } catch (IOException e) {
@@ -103,6 +111,7 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
             String ciphersuiteConf = "";
             String cryptoSA = "";
             byte[] sessionkeyBytes = null;
+            String macsuite = "";
             byte[] mackeyBytes = null;
             int nonce = 0;
 
@@ -112,13 +121,14 @@ public class PlainTicketCreds extends PlainMsgSAPKDP {
                 ciphersuiteConf = Utils.readSting(dai);
                 cryptoSA = Utils.readSting(dai);
                 sessionkeyBytes = Utils.readByteArray(dai);
+                macsuite = Utils.readSting(dai);
                 mackeyBytes = Utils.readByteArray(dai);
                 nonce = dai.readInt();
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, mackeyBytes, nonce);
+            return new PlainTicketCreds(ip, port, ciphersuiteConf, cryptoSA, sessionkeyBytes, macsuite, mackeyBytes, nonce);
         }
 
 
