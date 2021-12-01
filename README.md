@@ -1,9 +1,16 @@
 # srsc2122-project (PA1)
 > A secure “pay-per-view” real-time media streaming system
 
-## Working
-- SAPKDP complete specefication working and tested. Some parameters can even be configured. Furthermore the SignalingServer supports multiple connections/clients.
+## Work Done
 
+### SAPKDP 
+- SAPKDP complete specefication working and tested;
+- Some parameters can even be configured in the [config file](config/sapkdp.properties);
+- SignalingServer supports multiple concurrent connections/clients;
+
+### RTSTP 
+- Only round 1 working and tested. For round 2 and 3 the SecureDatagramSocket must be used;
+- All requested modes are suported (working and tested) for the SecureDatagramSocket as shown in the [phase 1](https://github.com/jpantao/srsc2122-project/tree/fase_1) branch.
 
 ## TODO
 - Fix integrity checks (currently they are only done over the payload excluding signatures)
