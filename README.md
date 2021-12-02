@@ -36,8 +36,6 @@
 ## TODO
 
 - Test all cipher algorithm, modes, and padding combination
-- Voucher blacklist
-- Nonce blacklist
 
 ---
 

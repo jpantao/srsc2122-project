@@ -1,5 +1,6 @@
 package strserver;
 
+import common.Nonces;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.messages.PlainTicketCreds;
@@ -126,6 +127,8 @@ public class StreamingServerHandshake {
         byte[] payload = Utils.readConsumingHeader(dai, msgType);
         PlainPBAckVerification verificationAck = (PlainPBAckVerification) PlainMsgSRTSP.deserialize(msgType, payload);
 
+        if (!Nonces.isNonceNew(verificationAck.getN2Prime()))
+            throw new Exception("reused nonce");
         if (verificationAck.getN2Prime() != expectedNonce)
             throw new Exception("na2' != na2 + 1");
         Utils.logReceived(verificationAck);

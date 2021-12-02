@@ -1,5 +1,6 @@
 package proxybox;
 
+import common.Nonces;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.messages.PlainTicketCreds;
@@ -97,6 +98,8 @@ public class ProxyHandshake {
         byte[] payload = Utils.readConsumingHeader(dai, msgType);
         PlainRTSSVerification verification = (PlainRTSSVerification) PlainMsgSRTSP.deserialize(msgType, payload);
 
+        if (!Nonces.isNonceNew(verification.getNa1Prime()))
+            throw new Exception("reused nonce");
         if (verification.getNa1Prime() != expectedNonce)
             throw new Exception("na1' != na1 + 1");
         if (!verification.isTicketValid())
@@ -150,6 +153,8 @@ public class ProxyHandshake {
         byte[] payload = Utils.readConsumingHeader(dai, msgType);
         PlainRTSSSyncInitFrame sync = (PlainRTSSSyncInitFrame) PlainMsgSRTSP.deserialize(msgType, payload);
 
+        if (!Nonces.isNonceNew(sync.getNa3Prime()))
+            throw new Exception("reused nonce");
         if (sync.getNa3Prime() != expectedNonce)
             throw new Exception("na3' != na3 + 1");
         Utils.logReceived(sync);
