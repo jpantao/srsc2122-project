@@ -38,8 +38,6 @@
 - Test all cipher algorithm, modes, and padding combination
 - Voucher blacklist
 - Nonce blacklist
-- Replace keystore files on code
-- Add value to voucher generations
 
 ---
 
@@ -89,7 +87,7 @@ the [proxybox.properties](config/proxybox.properties) file.
 java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
 
 # Example:
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/this.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e1fa718b.voucher
+java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e6f50e41.voucher
 ```
 
 ### With the run-pa1.sh script
@@ -101,7 +99,7 @@ Run the three components with the default configs:
 ./scripts/run-pa1.sh <movieID> <voucherFile>
 
 #Example
-./scripts/run-pa1.sh cars resources/coin_3040021e1fa718b.voucher
+./scripts/run-pa1.sh cars resources/coin_3040021e6f50e41.voucher
 ```
 
 A [log](log) directory will be created by the script with the stdout of the 3 components.

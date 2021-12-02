@@ -17,7 +17,7 @@ class StreamingServerUDP {
 
     public static final String CONFIG_FILE = "config/strserver.properties";
     public static final String MOVIES_DIR = "movies";
-    public static final String KEYSTORE_FILE = "keystores/this.keystore";
+    public static final String KEYSTORE_FILE = "keystores/streamingserver.keystore";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
 

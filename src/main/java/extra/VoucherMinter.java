@@ -55,8 +55,8 @@ public class VoucherMinter {
 
     static public void main(String []args ) throws Exception {
 
-        File file = new File("vouchers/coin_3040021e2ab0122.voucher");
-        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
+//        File file = new File("vouchers/coin_3040021e2ab0122.voucher");
+//        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
     mintVoucher();
     }
 

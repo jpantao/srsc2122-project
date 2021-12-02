@@ -181,7 +181,7 @@ public class Utils
     }
 
     public static void generatePBId() throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException {
-        FileInputStream is = new FileInputStream("keystore/this.keystore");
+        FileInputStream is = new FileInputStream("keystore/proxybox.keystore");
 
         KeyStore keystore = KeyStore.getInstance("PKCS12");
         keystore.load(is, "srsc2122".toCharArray());
@@ -250,21 +250,20 @@ public class Utils
     }
 
     public static PublicKey getPubKey(String keystoreFile, char[] storepass, String alias) {
-        PublicKey pubKey = null;
+        PublicKey publicKey = null;
         try {
             KeyStore ks = KeyStore.getInstance("PKCS12");
             ks.load(new FileInputStream(keystoreFile), storepass);
 
-            Key k = ks.getKey(alias, storepass);
-            if (k instanceof PrivateKey)
-                pubKey = ks.getCertificate(alias).getPublicKey();
-            else
-                throw new Exception("Private key for " + alias + "not found in " + keystoreFile);
+            java.security.cert.Certificate cert = ks.getCertificate(alias);
+
+            publicKey = cert.getPublicKey();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
-        return pubKey;
+        return publicKey;
     }
 
     public static void logSent(Object msg) {

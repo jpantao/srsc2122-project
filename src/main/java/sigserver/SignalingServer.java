@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SignalingServer {
 
     public static final String CONFIG_FILE = "config/sigserver.properties";
-    public static final String KEYSTORE_FILE = "keystores/this.keystore";
+    public static final String KEYSTORE_FILE = "keystores/signalingserver.keystore";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
     private static final AtomicInteger NONCE_COUNTER = new AtomicInteger(1);
