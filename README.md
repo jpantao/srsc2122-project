@@ -19,10 +19,6 @@
 - Runs over UDP only;
 - The server supports only one movie request.
 
-### Ciphersuites tested:
-
-- AES/CTR/NoPadding HmacSHA512
-
 ### Additional Notes
 
 - Registered users' database can be found in [users.json](resources/users.json) ;
@@ -30,12 +26,10 @@
 - Configuration files are under the [config](config) directory;
 - Keystore files are under the [keystores](keystores) directory;
 - Movie files are under the [movies](movies) directory;
-- Ciphersuites tested:
-  - AES/CTR/NoPadding HmacSHA512.
 
-## TODO
+[comment]: <> (- Ciphersuites tested:)
 
-- Test all cipher algorithm, modes, and padding combination
+[comment]: <> (    - AES/CTR/NoPadding HmacSHA512.)
 
 ---
 
@@ -85,7 +79,13 @@ the [proxybox.properties](config/proxybox.properties) file.
 java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
 
 # Example:
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e6f50e41.voucher
+java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e45931ef.voucher
+```
+
+### Generate voucher
+
+```bash
+java -cp target/srsc-project-PA1.jar extra.VoucherMinter
 ```
 
 ### With the run-pa1.sh script
@@ -97,16 +97,12 @@ Run the three components with the default configs:
 ./scripts/run-pa1.sh <movieID> <voucherFile>
 
 #Example
-./scripts/run-pa1.sh cars resources/coin_3040021e6f50e41.voucher
+./scripts/run-pa1.sh cars resources/coin_3040021e45931ef.voucher
 ```
 
 A [log](log) directory will be created by the script with the stdout of the 3 components.
 
-### Generate voucher
 
-```bash
-java -cp target/srsc-project-PA1.jar extra.VoucherMinter
-```
 
 
 

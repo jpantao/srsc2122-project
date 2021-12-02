@@ -56,7 +56,7 @@ public class SignalingServer {
 
                 // launch handler
                 new Thread(() -> serverSAPKDP.handleHandshake(client)).start();
-                break; // only handle 1 for now
+//                break; // only handle 1 for now
             }
         } catch (IOException e) {
             e.printStackTrace();

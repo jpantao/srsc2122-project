@@ -1,7 +1,7 @@
 {
   "cars": {
     "ppvprice": 1,
-    "ciphersuite": "AES/CTR/NoPadding",
+    "ciphersuite": "AES/GCM/NoPadding",
     "cryptoSA": "00000001ceb373f20000000000000001",
     "keyBytes": "e2e2d47f585cbeb617ddc0f8a7af7476c006e43bd9d927941c054049e7685686",
     "macsuite": "HmacSHA512",

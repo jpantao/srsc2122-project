@@ -9,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
+import java.util.Arrays;
 import java.util.Properties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -126,6 +127,7 @@ public class SecureDatagramSocket extends DatagramSocket {
                 if (options.contains("GCM")) {
                     ivSpec = Utils.createCtrIvForAES(random.nextInt(), random);
                     initCipher(Cipher.ENCRYPT_MODE, algorithm, ivSpec);
+                    cipherText = new byte[cipher.getOutputSize(datagramPacket.getLength())];
                 } else {
                     ivSpec = Utils.createCtrIvForCCM(random);
                     initCipher(Cipher.ENCRYPT_MODE, algorithm, ivSpec);

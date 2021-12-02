@@ -55,6 +55,7 @@ public class VoucherMinter {
 
 //        File file = new File("vouchers/coin_3040021e2ab0122.voucher");
 //        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
+        Utils.loadBC();
         mintVoucher();
     }
 
@@ -78,7 +79,7 @@ public class VoucherMinter {
         String proof2 = properties.getProperty("IntegrityProof2");
 
         if (spentVouchers.containsKey(coinAuthenticity))
-            return 0;
+            return -1;
         else
             spentVouchers.put(coinAuthenticity, new Date());
         // TODO MAKE IT PERSISTENCE
@@ -106,11 +107,11 @@ public class VoucherMinter {
 
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF1_ALGO), Utils.decodeHexString(proof1)))
-            return 0;
+            return -1;
         LOGGER.info(SHA_256_OK);
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF2_ALGO), Utils.decodeHexString(proof2)))
-            return 0;
+            return -1;
         LOGGER.info(RIPEMD_OK);
 
 
@@ -129,17 +130,17 @@ public class VoucherMinter {
         toVerify.write(NEWLINE);
 
         if (!checkSignature(coinPublicKey, coinAuthenticity, toVerify))
-            return 0;
+            return -1;
 
         toVerify.write(bfReader.readLine().getBytes());
         toVerify.write(NEWLINE);
 
 
         if (!checkSignature(issuerPublicKey, issuerSignature, toVerify))
-            return 0;
+            return -1;
 
         if (expireDate.getTime() < (new Date().getTime()))
-            return 0;
+            return -1;
         return Integer.parseInt(coinValue);
     }
 

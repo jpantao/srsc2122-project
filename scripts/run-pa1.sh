@@ -1,9 +1,10 @@
 #!/bin/bash
 
-#read -p "Open the network stream address udp://@224.7.7.7:7777 on vlc and press enter to start."
-($(which vlc) udp://@224.7.7.7:7777 >> /dev/null 2>&1) &
-
 mkdir -p "log"
+
+#read -p "Open the network stream address udp://@224.7.7.7:7777 on vlc and press enter to start."
+echo 'Launching VLC...'
+($(which vlc) udp://@224.7.7.7:7777 >> /dev/null 2>&1) &
 
 echo 'Launching SignalingServer...'
 (java -cp target/srsc-project-PA1.jar sigserver.SignalingServer > log/sigserver.log) &
