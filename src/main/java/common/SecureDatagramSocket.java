@@ -75,8 +75,6 @@ public class SecureDatagramSocket extends DatagramSocket {
         ivBytes = Utils.decodeHexString(properties.getProperty("ivBytes"));
         byte[] hmacBytes = Utils.decodeHexString(properties.getProperty("hmacBytes"));
 
-        File myObj = new File("config/config.properties");
-        myObj.delete();
 
         try {
             cipher = Cipher.getInstance(options, "BC");
