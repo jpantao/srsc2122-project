@@ -12,10 +12,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Properties;
-import java.util.Scanner;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class VoucherMinter {
@@ -50,14 +47,15 @@ public class VoucherMinter {
     private static final String EC = "EC";
     private static final Logger LOGGER = Logger.getLogger(VoucherMinter.class.getName());
     private static final int NEWLINE = 10;
+    private static final Map<String, Date> spentVouchers = new HashMap<>();
     private static String fileFingerPrint;
 
 
-    static public void main(String []args ) throws Exception {
+    static public void main(String[] args) throws Exception {
 
 //        File file = new File("vouchers/coin_3040021e2ab0122.voucher");
 //        System.out.println((verifyVoucher(Files.readAllBytes(file.toPath()))));
-    mintVoucher();
+        mintVoucher();
     }
 
     public static int verifyVoucher(byte[] voucher) throws IOException, ParseException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidKeyException, SignatureException, NoSuchProviderException, CertificateException, KeyStoreException, UnrecoverableKeyException {
@@ -79,6 +77,12 @@ public class VoucherMinter {
         String proof1 = properties.getProperty("IntegrityProof1");
         String proof2 = properties.getProperty("IntegrityProof2");
 
+        if (spentVouchers.containsKey(coinAuthenticity))
+            return 0;
+        else
+            spentVouchers.put(coinAuthenticity, new Date());
+        // TODO MAKE IT PERSISTENCE
+
 
         ByteArrayOutputStream toVerify = new ByteArrayOutputStream();
         ByteArrayInputStream is = new ByteArrayInputStream(voucher);
@@ -99,9 +103,6 @@ public class VoucherMinter {
         toVerify.write(NEWLINE);
         toVerify.write(bfReader.readLine().getBytes());
         toVerify.write(NEWLINE);
-
-
-
 
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF1_ALGO), Utils.decodeHexString(proof1)))
@@ -281,7 +282,7 @@ public class VoucherMinter {
     }
 
     private static Date calculateDateAhead(int expire) {
-        Date dNow = new Date( );
+        Date dNow = new Date();
         Calendar cal = Calendar.getInstance();
         cal.setTime(dNow);
         cal.add(Calendar.DATE, expire); //minus number would decrement the days
