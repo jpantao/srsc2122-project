@@ -35,7 +35,7 @@
 
 ## Compiling
 
-The following command creates the [srsc-project-PA1.jar](target/srsc-project-PA1.jar) file with all the dependencies:
+The following command creates the [srsc-project-PA2.jar](target/srsc-project-PA2.jar) file with all the dependencies:
 
 ```
 mvn package
@@ -63,10 +63,10 @@ Default port is 9999. Any changes should also be reflected in the [proxybox.prop
 file.
 
 ```bash
-java -cp target/srsc-project-PA1.jar strserver.StreamingServerUDP <port>
+java -cp target/srsc-project-PA2.jar strserver.StreamingServerUDP <port>
 
 # Example:
-java -cp target/srsc-project-PA1.jar strserver.StreamingServerUDP 
+java -cp target/srsc-project-PA2.jar strserver.StreamingServerUDP 
 ```
 
 ### ProxyBox
@@ -76,28 +76,28 @@ srsc2021**. The multicast address for the mpegplayers can be set in
 the [proxybox.properties](config/proxybox.properties) file.
 
 ```bash
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
+java -cp target/srsc-project-PA2.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
 
 # Example:
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e45931ef.voucher
+java -cp target/srsc-project-PA2.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e45931ef.voucher
 ```
 
 ### Generate voucher
 
 ```bash
-java -cp target/srsc-project-PA1.jar extra.VoucherMinter
+java -cp target/srsc-project-PA2.jar extra.VoucherMinter
 ```
 
-### With the run-pa1.sh script
+### With the run-PA2.sh script
 
 Run the three components with the default configs:
 
 ```bash
 # Available movieID's: cars, and monsters.
-./scripts/run-pa1.sh <movieID> <voucherFile>
+./scripts/run-pa2.sh <movieID> <voucherFile>
 
 #Example
-./scripts/run-pa1.sh cars resources/coin_3040021e45931ef.voucher
+./scripts/run-pa2.sh cars resources/coin_3040021e45931ef.voucher
 ```
 
 A [log](log) directory will be created by the script with the stdout of the 3 components.
