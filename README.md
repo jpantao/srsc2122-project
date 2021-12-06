@@ -1,6 +1,6 @@
-# srsc2122-project (PA1 - Phase 2)
+# srsc2122-project (PA2)
 
-> A secure “pay-per-view” real-time media streaming system
+> Overlayed secure “pay-per-view” real-time media streaming system supported by configurable TLS Channels
 
 ## Work Done
 
