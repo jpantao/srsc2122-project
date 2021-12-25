@@ -5,3 +5,5 @@ target/
 *.voucher
 out/
 /.attach*
+
+*.log
