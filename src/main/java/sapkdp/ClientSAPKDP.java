@@ -4,6 +4,8 @@ import common.Utils;
 import sapkdp.messages.*;
 
 import javax.crypto.*;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -80,9 +82,13 @@ public class ClientSAPKDP {
         return sigBytes;
     }
 
-    public void handshake(String movieID, String coinFile) {
+    public void handshake(String movieID, String coinFile) throws IOException {
         String[] addr = sigserverAddr.split(":");
-        try (Socket sock = new Socket(addr[0], Integer.parseInt(addr[1]))) {
+        SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+
+        try (SSLSocket sock = (SSLSocket) f.createSocket(addr[0], Integer.parseInt(addr[1]))) {
+            sock.startHandshake();
             DataInputStream in = new DataInputStream(sock.getInputStream());
             DataOutputStream out = new DataOutputStream(sock.getOutputStream());
             String dsaSuite = properties.getProperty("dsa-ciphersuite");
