@@ -1,0 +1,32 @@
+TLS Protocol: Traffic Analysis 
+---------------------------------
+This is a PCAP file (format exportd form the Wireshark tool)
+used to analyze a TLS connection.
+The file (wireshark-clip-tls.pcap) is an excert of te
+TLS connection between a computer (remotely used in a
+domestic wireless network: 192.168.1.0 mash  255.255.255.0 - Host
+address 192.168.1.8, and the Clip System at FCT-UNL: 193.136.126.138.
+
+You can obtain similar traces with different hosts with your wireshark
+tool, to capture and analyze any traffic visualization supported by
+wireshark.
+
+If you want to see the wireshark-clip-tls.pcap you can also import
+it for your wireshark.
+
+Note) pcap is an interoperable format used by many traffic analysis
+tools, including for example: tcpdump (a command line tool usually
+included in many Linux distros and availabel for download for
+many other environments.
+
+
+To know more about the generalized use of Wireshark:
+
+https://gitlab.com/wireshark/wireshark/-/wikis/home
+
+For many sample captures, see:
+
+https://gitlab.com/wireshark/wireshark/-/wikis/SampleCaptures
+
+Wireshark ref. site: https://www.wireshark.org/
+

@@ -1,0 +1,30 @@
+// Before:
+// Remember also the previous examples using openssl 
+
+
+// Now:
+// In this lab we will analyze TLS traffic w/ openssl tool
+// focusing in the TLS handshake
+
+First to see the ciphersuites enabled in openssl (ex):
+openssl ciphers
+openssl ciphers -v
+openssl ciphers -v | grep TLSv1.2
+
+
+// Now you can debug the TLS handshake using HTTPS URLs
+openssl s_client -connect clip.unl.pt:443
+openssl s_client -tls1_2 -connect clip.unl.pt:443
+openssl s_client -tls1_3 -connect www.google.com:443
+openssl s_client -showcerts -connect clip.unl.pt:443
+openssl s_client -host clip.unl.pt -port 443
+openssl s_client -host -state -host clip.unl.pt -port 443
+openssl s_client -host -debug -host clip.unl.pt -port 443
+//
+
+// You can see that we can force ciphersuites from the client
+// for a TLS session. In openssl tool this is done using 
+// the -ciphersuites option
+ex:
+openssl s_client -tls1_3 -ciphersuites 'TLS_AES_256_GCM_SHA384' -connect tls13.cloudflare.com:443
+openssl s_client -tls1_2 -ciphersuites 'TLS_AES_256_GCM_SHA384' -connect clip.unl.pt:443

@@ -1,0 +1,2 @@
+java -Djavax.net.ssl.trustStore=servertruststore ClassFileServer 9000 docs TLS true
+java ClassFileServer 9000 docs TLS

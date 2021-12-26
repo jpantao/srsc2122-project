@@ -1,0 +1,2 @@
+java -Djavax.net.ssl.trustStore=clienttruststore SSLSocketClient localhost 9000
+java -Djavax.net.ssl.trustStore=clienttruststore SSLSocketClientWithClientAuth localhost 9000 /index.html

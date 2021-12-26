@@ -1,0 +1,25 @@
+// How to manipulate X509 certificates in files
+// See: java.security.cert.Certificate (Package java.security.cert)
+        or (Package javax.security.cert, until Java 8)
+
+// Ex: check how to (using files storing certificates)
+java ReadCert <certificate>
+//
+
+// To check w/ ReadCert ...
+
+// Remember from Lab-6:
+
+// To obtain the certificate in a HTTPS server connection
+// and store the certificate in a local file (in this case using
+// DER format ...
+openssl s_client -showcerts -connect clip.unl.pt:443 | openssl x509 -outform DER > clip.der
+
+
+// To obtain certificates in files from Java keystores where we store
+// Private-Public Keypairs generated with keytool
+keytool -keystore <keystore> -alias <entry> -export -file
+<filename>
+
+
+JavaHttpsExampleCertificate.java 

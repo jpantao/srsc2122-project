@@ -1,0 +1,48 @@
+// Servidor que apenas se autentica perante o cliente
+   So precisa do seu chaveiro de chaves ... Que no caso
+   se chama serverkeystore
+
+   Chaves geradas da seguinte forma ... (notar as passwords)
+   
+   keytool -genkey -alias server -keyalg RSA -keystore serverkeystore
+
+// --------------------------
+// Servidor vai ter que gerar no entanto um certificado pois uma
+   vez que o mesmo nao esta a ser emitido por uam CA confiavel pelo
+   cliente, vai ter que se passar o certificado ao cliente para nela
+   poder confiar...
+   
+   Este certificado (server.cer) sera depois passado ao cliente...
+    de algum modo ...
+   No caso do hanshake SSL o certificado sera enviado, estando a
+   usar-se autenticacao do lado do servidor (recordar o protocolo
+   handshake na pilha SSL ou TLS)
+   
+   keytool -export -keystore serverkeystore -alias server -file server.cer
+
+   Testar tb
+
+   keytool -printcert -file server.ser
+
+
+// ---------------------------   
+// No caso do servidor pedir ou exigir autenticacao aos clientes, estes
+   vao usar um certificado no qual o servidor precisa de confiar, a
+   nao ser que tenha sido emitido por uma CA no qual o servidor
+   ja confia .... (ver cacerts default na instalacao do JAVA / JDK/JRE)
+   
+   Isto ocorre por exemplo quando o servidor em causa esta parametrizado
+   para fazer autenticacao mutua ou quando apenas o cliente se autentica
+
+   keytool -importcert -alias client -file client.cer -keystore servertruststore
+
+   O certificado client.cer foi obtido de algum modo ...
+  
+   O certificado client.cer tem que ser dado ao servidor de algum modo...
+
+Para correr:
+Neste caso o servidor sera entao corrido ...
+
+
+java -Djavax.net.ssl.trustStore=servertruststore  ClassFileServer 9000 docs TLS true
+

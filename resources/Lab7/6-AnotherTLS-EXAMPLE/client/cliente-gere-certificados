@@ -1,0 +1,56 @@
+// Cliente que apenas autentcia o lado-servidor
+
+   Apenas tem que saber confiar no certificado que o servidor lhe
+   envia quando se autenticar. Para tal deve importar o certificado
+   do servidor para o seu chaveiro de certificados de confianca
+   que aqui chamaremos de truststore
+   
+   Este certificado (server.cer) sera obtido de algum modo ...
+   
+   keytool -importcert -alias server -file server.cer -keystore truststore
+
+   O que acontece quando usa:
+   keytool -list -keystore cacerts -storepass changeit
+
+   (cacerts - ver a configuracao da instalacao JDK que esta a ser usada)
+
+   Uma possibilidade seria importar mais certificados em quem confiar
+   para dentro da keystore cacerts (nao muito aconselhavel para efeitos
+   de desenvolvimento ou testes)
+
+   ex: keytool -import -alias trust -file trust.cer -keystore cacerts -storepass changeit
+
+// ---------------------------------------------------------------------
+// E NO CASO DE AUTENTICACAO MUTUA DO LADO DO SERVIDOR ?
+// No caso de lhe vir a ser pedida autenticacao - exemplo de autenticcao
+   mutua ou unilateral cliente face ao servidor ...
+   Cliente tem que gerar as suas chaves e guardar na sua keystore
+   que no caso se chama clientkeystore
+
+
+   keytool -genkey -alias client -keyalg RSA -keystore clientkeystore
+
+
+// Depois deve obter o certificado associado a estas chaves da keystore
+   pois esse certificado vai ter que ser passado ao servidor para que o
+   servidor confie no mesmo colocando no seu chaveiro de certificados
+   confiaveis que depois vai usar ...
+   
+   keytool -export -keystore clientkeystore -alias client -file client.cer
+  
+   O certificado client.cer tem que ser dado ao servidor de algum modo...
+
+// --------------------------------------------------------------------
+// Para correr os clientes
+
+   Caso do cliente que apenas autentica o servidor
+   java -Djavax.net.ssl.trustStore=truststore SSLSocketClient localhost 9000
+
+// Caso do cliente que se autentica tb perante o servidor
+   (ex. autenticacao mutua)
+
+   java -Djavax.net.ssl.trustStore=clienttruststore SSLSocketClientWithClientAuth localhost 9000 /index.html
+
+// ----------------------------------------------------------
+
+

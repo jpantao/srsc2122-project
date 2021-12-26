@@ -1,0 +1,54 @@
+// USE OF KEYTOOL
+// You must be aware of the use of keytool to generate keys for 
+// asymmetric encryoption algs., to manage keystores, to generate
+// public-key certificates, to generate/manage certificates' chains,
+// to manage certificates' stores (in trusted certificate stores), and
+// to manage CRLs
+
+#Criar um par de chaves RSA de 2048 bits e guardar numa keystore na entry hj
+
+keytool -genkey -alias hj -keyalg RSA -keystore hj.jks -keysize 2048 -storepass hjhjhjhj
+
+
+#gerar uma keystore com um certificado auto-assinado
+
+
+keytool -genkey -keyalg RSA -alias hj -keystore hjselfcertificate.jks -storepass hjhjhjhj -validity 360 -keysize 4096
+
+
+#Gerar um certificado a partir da anterior keystore e exporta-lo para
+um ficheiro hj.cer
+
+
+keytool -export -alias hj -keystore hjselfcertificate.jks -file hj.cer
+
+
+#Gerar um certificado a partir da anterior keystore e exporta-lo para
+um ficheiro hj.cer mas em formarto BASE64
+
+keytool -exportcert -alias hj -keystore hjselfcertificate.jks -file hjbase64.cer -rfc
+
+
+#Verificar o certificado
+
+keytool -printcert -file hj.cer
+
+#Importar o certificado para uma trusted store
+
+keytool -import -file hj.cer -alias hj keystore trustedstore
+
+#Ver agora o conteudo da keystore trustedstore
+
+keytool -list -v -keystore trustedstore 
+
+# Ver os certificados root que estao na cacerts na instalacao da
+framework JAVA
+
+
+keytool -list -v -keystore /Library/Java/Home/lib/security/cacerts 
+
+
+#Gerar certificado aotoassinado em formato PKCS12 (numa storetype pkcs12)
+
+
+keytool -genkeypair -alias hj -keystore hj.pfx -validity 365 -keyalg DSA -keysize 1024 -storetype pkcs12

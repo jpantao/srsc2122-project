@@ -1,0 +1,27 @@
+// To support the Lab discussion:
+
+java URLGet <url>   // can use with HTTPS URLs
+java TLSSocketClient 
+java JavaHTTPSExample <URL>
+
+// to run and debug all of the TLS trace, ex:
+java -Djavax.net.debug=all TLSSocketClient
+// Can trace wit this property the TLS engine/protocol
+
+// See that you can instrument the TLS connection in your Java code,
+// ex.:
+java JavaHttpsInstrumentationExample.java 
+
+// So, after obtaining all the parameters obtained from your
+// TLS handshake (on-the-fly in runtime) you can obviously control
+// or validate everything with fine-grine control, ex.: TLS protocol
+// version establised, ciphersuites disabled/enabled/established,
+// authentication mode: server only, client only or mutual,
+// certificates and certification chains in the TLS connection, as
+// well as, all the remaining TLS session security parameters established
+// in the TLS handshake.
+
+// Note: remember from Lab-6 how to manipulate X509 certificates in files
+// See: java.security.cert.Certificate (Package java.security.cert)
+        or (Package javax.security.cert, until Java 8)
+

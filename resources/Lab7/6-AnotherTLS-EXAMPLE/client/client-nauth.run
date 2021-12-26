@@ -1,0 +1,10 @@
+// To run the client ...
+java -Djavax.net.ssl.trustStore=clienttruststore SSLSocketClient localhost 9000
+
+// If you are using the client to connect to a server with a
+//certification chain in a root-of trust trustable by the Java JRE:
+java -Djavax.net.ssl.trustStore=clienttruststore SSLSocketClient localhost 9000
+
+
+// If you want to run the client with a complete TLS debug !!! ;-)))
+java -Djavax.net.debug=all SSLSocketClient clip.unl.pt 443 / > DEBUG.txt
