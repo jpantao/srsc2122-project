@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SignalingServer {
 
     public static final String CONFIG_FILE = "config/sigserver.properties";
+    public static final String TLS_CONFIG_FILE = "config/signalingserver_tls.properties";
     public static final String KEYSTORE_FILE = "keystores/signalingserver.keystore";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
@@ -29,6 +30,7 @@ public class SignalingServer {
     private static JsonObject users, movies;
 
     private static  Properties properties;
+    private static  Properties tlsProperties;
     private static ServerSAPKDP serverSAPKDP;
 
     static {
@@ -37,7 +39,9 @@ public class SignalingServer {
             users = JsonParser.parseReader(new FileReader("resources/users.json")).getAsJsonObject();
             movies = JsonParser.parseReader(new FileReader("resources/movies.json")).getAsJsonObject();
             Utils.loadBC();
+
             properties = Utils.loadConfig(CONFIG_FILE);
+            tlsProperties = Utils.loadConfig(TLS_CONFIG_FILE);
             serverSAPKDP = ServerSAPKDP.getInstance();
             serverSAPKDP.load(KEYSTORE_FILE, KEYSTORE_PASS, users, movies);
         } catch (Exception e) {
@@ -50,7 +54,7 @@ public class SignalingServer {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : Integer.parseInt(properties.getProperty("port"));
 
         String ksName = "keystores/signalingserver_tls.keystore";
-//        String tsName = "keystores/servertruststore";
+        String tsName = "keystores/truststore";
         char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
         char[]  ctPass = "srsc2122".toCharArray();
         String[] confciphersuites={"TLS_RSA_WITH_AES_256_CBC_SHA256"};
@@ -60,16 +64,15 @@ public class SignalingServer {
         SSLContext sc = SSLContext.getInstance("TLS");
 
         KeyStore ksKeys = KeyStore.getInstance("JKS");
-//        KeyStore ksTrust = KeyStore.getInstance("JKS");
+        KeyStore ksTrust = KeyStore.getInstance("JKS");
         KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-//        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
 
         ksKeys.load(new FileInputStream(ksName), ksPass);
-//        ksTrust.load(new FileInputStream(config.getProperty("trust_store_path")), config.getProperty("trust_store_pass").toCharArray());
+        ksTrust.load(new FileInputStream(tsName), ksPass);
         kmf.init(ksKeys, ctPass);
-//        tmf.init(ksTrust);
-        sc.init(kmf.getKeyManagers(), null, null);
-//        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+        tmf.init(ksTrust);
+        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
 
 
@@ -77,8 +80,24 @@ public class SignalingServer {
 
 
         SSLServerSocketFactory ssf = sc.getServerSocketFactory();
+
         try (SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(port)) {
             // server is listening on port 1234
+            switch (tlsProperties.getProperty("authentication")) {
+                case "MUTUAL":
+                    s.setUseClientMode(false);
+                    s.setNeedClientAuth(true);
+                    break;
+                case "SIGNALING ONLY":
+                    s.setUseClientMode(false);
+                    s.setNeedClientAuth(false);
+                    break;
+                case "PROXY ONLY":
+                    s.setUseClientMode(true);
+                    break;
+            }
+            s.setEnabledCipherSuites(tlsProperties.getProperty("ciphersuites").split(","));
+            s.setEnabledProtocols(new String [] {tlsProperties.getProperty("tlsversion")});
             s.setReuseAddress(true);
             s.setEnabledProtocols(confprotocols);
             s.setEnabledCipherSuites(confciphersuites);

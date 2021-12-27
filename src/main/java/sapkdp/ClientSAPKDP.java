@@ -21,6 +21,7 @@ public class ClientSAPKDP {
 
     public static final int VERSION = 1;
     public static final String CONFIG_FILE = "config/sapkdp.properties";
+    public static final String TLS_CONFIG_FILE = "config/proxybox_tls.properties";
 
     //TODO: convert alias to args or props!
     // Pubkey alias: coinissuer, proxybox, streamingserver e signalingserver
@@ -36,6 +37,7 @@ public class ClientSAPKDP {
     private final String userPW;
     private final String sigserverAddr;
     private final Properties properties;
+    private final Properties tlsProperties;
     private final Mac mac;
 
 
@@ -52,6 +54,7 @@ public class ClientSAPKDP {
 
         Utils.loadBC();
 
+        tlsProperties = Utils.loadConfig(TLS_CONFIG_FILE);
         properties = Utils.loadConfig(CONFIG_FILE);
         String macSuite = properties.getProperty("mac-ciphersuite");
         byte[] macKeyBytes = Utils.decodeHexString(properties.getProperty("mac-keybytes"));
@@ -84,25 +87,9 @@ public class ClientSAPKDP {
     }
 
     public void handshake(String movieID, String coinFile) throws IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, KeyManagementException {
+
         String[] addr = sigserverAddr.split(":");
-
-//        String ksName = "keystores/clienttruststore";
-//        char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
-//        char[]  ctPass = "srsc2122".toCharArray();
-//        String[] confciphersuites={"TLS_RSA_WITH_AES_256_CBC_SHA256"};
-//        String[] confprotocols={"TLSv1.2"};
-//        KeyStore ks = KeyStore.getInstance("JKS");
-//        ks.load(new FileInputStream(ksName), ksPass);
-//        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-//        kmf.init(ks, ctPass);
-//        SSLContext sc = SSLContext.getInstance("TLS");
-//        sc.init(kmf.getKeyManagers(), null, null);
-
-
-
-
-
-//        String ksName = "keystores/serverkeystore";
+        String ksName = "keystores/proxybox_tls.keystore";
         String tsName = "keystores/truststore";
         char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
         char[]  ctPass = "srsc2122".toCharArray();
@@ -112,18 +99,16 @@ public class ClientSAPKDP {
 
         SSLContext sc = SSLContext.getInstance("TLS");
 
-//        KeyStore ksKeys = KeyStore.getInstance("JKS");
+        KeyStore ksKeys = KeyStore.getInstance("JKS");
         KeyStore ksTrust = KeyStore.getInstance("JKS");
-//        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
         TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
 
-//        ksKeys.load(new FileInputStream(ksName), ksPass);
+        ksKeys.load(new FileInputStream(ksName), ksPass);
         ksTrust.load(new FileInputStream(tsName), ksPass);
-//        kmf.init(ksKeys, ctPass);
+        kmf.init(ksKeys, ctPass);
         tmf.init(ksTrust);
-        sc.init(null, tmf.getTrustManagers(), null);
-//        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
+        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
         SSLSocketFactory f = sc.getSocketFactory();
 
@@ -134,6 +119,19 @@ public class ClientSAPKDP {
 
 
         try (SSLSocket sock = (SSLSocket) f.createSocket(addr[0], Integer.parseInt(addr[1]))) {
+            switch (tlsProperties.getProperty("authentication")) {
+                case "MUTUAL":
+                    break;
+                case "SIGNALING ONLY":
+                    sock.setUseClientMode(true);
+                    break;
+                case "PROXY ONLY":
+                    sock.setNeedClientAuth(false);
+                    sock.setUseClientMode(false);
+                    break;
+            }
+            sock.setEnabledCipherSuites(tlsProperties.getProperty("ciphersuites").split(","));
+            sock.setEnabledProtocols(new String [] {tlsProperties.getProperty("tlsversion")});
             sock.startHandshake();
             DataInputStream in = new DataInputStream(sock.getInputStream());
             DataOutputStream out = new DataOutputStream(sock.getOutputStream());
