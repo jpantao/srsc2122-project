@@ -4,18 +4,19 @@ import common.Utils;
 import sapkdp.messages.*;
 
 import javax.crypto.*;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ThreadLocalRandom;
 
+@SuppressWarnings("DuplicatedCode")
 public class ClientSAPKDP {
 
     public static final int VERSION = 1;
@@ -82,9 +83,54 @@ public class ClientSAPKDP {
         return sigBytes;
     }
 
-    public void handshake(String movieID, String coinFile) throws IOException {
+    public void handshake(String movieID, String coinFile) throws IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyStoreException, KeyManagementException {
         String[] addr = sigserverAddr.split(":");
-        SSLSocketFactory f = (SSLSocketFactory) SSLSocketFactory.getDefault();
+
+//        String ksName = "keystores/clienttruststore";
+//        char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
+//        char[]  ctPass = "srsc2122".toCharArray();
+//        String[] confciphersuites={"TLS_RSA_WITH_AES_256_CBC_SHA256"};
+//        String[] confprotocols={"TLSv1.2"};
+//        KeyStore ks = KeyStore.getInstance("JKS");
+//        ks.load(new FileInputStream(ksName), ksPass);
+//        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+//        kmf.init(ks, ctPass);
+//        SSLContext sc = SSLContext.getInstance("TLS");
+//        sc.init(kmf.getKeyManagers(), null, null);
+
+
+
+
+
+//        String ksName = "keystores/serverkeystore";
+        String tsName = "keystores/truststore";
+        char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
+        char[]  ctPass = "srsc2122".toCharArray();
+//        String[] confciphersuites={"TLS_RSA_WITH_AES_256_CBC_SHA256"};
+//        String[] confprotocols={"TLSv1.2"};
+
+
+        SSLContext sc = SSLContext.getInstance("TLS");
+
+//        KeyStore ksKeys = KeyStore.getInstance("JKS");
+        KeyStore ksTrust = KeyStore.getInstance("JKS");
+//        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+
+//        ksKeys.load(new FileInputStream(ksName), ksPass);
+        ksTrust.load(new FileInputStream(tsName), ksPass);
+//        kmf.init(ksKeys, ctPass);
+        tmf.init(ksTrust);
+        sc.init(null, tmf.getTrustManagers(), null);
+//        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+
+        SSLSocketFactory f = sc.getSocketFactory();
+
+
+
+
+
 
 
         try (SSLSocket sock = (SSLSocket) f.createSocket(addr[0], Integer.parseInt(addr[1]))) {

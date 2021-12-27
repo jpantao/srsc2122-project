@@ -49,25 +49,34 @@ public class SignalingServer {
     public static void main(String[] args) throws KeyStoreException, NoSuchAlgorithmException, IOException, KeyManagementException, UnrecoverableKeyException, CertificateException {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : Integer.parseInt(properties.getProperty("port"));
 
-        String ksName = "keystores/serverkeystore";
-        char[]  ksPass = "hjhjhjhj".toCharArray();   // password da keystore
-        char[]  ctPass = "hjhjhjhj".toCharArray();
+        String ksName = "keystores/signalingserver_tls.keystore";
+//        String tsName = "keystores/servertruststore";
+        char[]  ksPass = "srsc2122".toCharArray();   // password da keystore
+        char[]  ctPass = "srsc2122".toCharArray();
         String[] confciphersuites={"TLS_RSA_WITH_AES_256_CBC_SHA256"};
         String[] confprotocols={"TLSv1.2"};
-        KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream(ksName), ksPass);
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-        kmf.init(ks, ctPass);
+
+
         SSLContext sc = SSLContext.getInstance("TLS");
+
+        KeyStore ksKeys = KeyStore.getInstance("JKS");
+//        KeyStore ksTrust = KeyStore.getInstance("JKS");
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+//        TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+
+        ksKeys.load(new FileInputStream(ksName), ksPass);
+//        ksTrust.load(new FileInputStream(config.getProperty("trust_store_path")), config.getProperty("trust_store_pass").toCharArray());
+        kmf.init(ksKeys, ctPass);
+//        tmf.init(ksTrust);
         sc.init(kmf.getKeyManagers(), null, null);
+//        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+
+
+
+
+
         SSLServerSocketFactory ssf = sc.getServerSocketFactory();
-
-
-
-
-
-
-
         try (SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(port)) {
             // server is listening on port 1234
             s.setReuseAddress(true);
