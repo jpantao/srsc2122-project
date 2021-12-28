@@ -28,15 +28,14 @@ public class SecureDatagramSocket extends DatagramSocket {
     Cipher cipher = null;
     Key hMacKey;
 
-    public SecureDatagramSocket() throws SocketException {
-        super();
-        init(Cipher.ENCRYPT_MODE);
-    }
 
 
-    public SecureDatagramSocket(SocketAddress inSocketAddress) throws SocketException {
+    public SecureDatagramSocket(SocketAddress inSocketAddress, Boolean is_server) throws SocketException {
         super(inSocketAddress);
-        init(Cipher.DECRYPT_MODE);
+        if (is_server)
+            init(Cipher.ENCRYPT_MODE);
+        else
+            init(Cipher.DECRYPT_MODE);
     }
 
 

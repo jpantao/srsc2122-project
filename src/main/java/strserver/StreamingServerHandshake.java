@@ -43,7 +43,7 @@ public class StreamingServerHandshake {
     private int port;
     private String movieID;
 
-    public StreamingServerHandshake(String keystoreFile, char[] storepass, int port) throws IOException {
+    public StreamingServerHandshake(String keystoreFile, char[] storepass, int port, SecureDatagramSocket s) throws IOException {
         Utils.loadBC();
         properties = Utils.loadConfig(CONFIG_FILE);
 
@@ -52,7 +52,7 @@ public class StreamingServerHandshake {
         mac = Utils.getHMAC(macSuite, macKeyBytes, macSuite);
 
 
-        socket = new DatagramSocket(port);
+        socket = s;
 
         // load keypair from keystore
         keyPair = Utils.getKeyPair(keystoreFile, storepass, STRSERVER_ALIAS);
@@ -95,18 +95,18 @@ public class StreamingServerHandshake {
             //change port for socket simulating connections (helps multiple client support in the future)
             Utils.writeCryptoConf(ticket, CRYPTOCONF_FILE);
             System.out.println("listen port " + ticket.getPort());
-            socket.close();
-            SecureDatagramSocket newSocket = new SecureDatagramSocket(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), ticket.getPort()));
-            newSocket.send(round2Packet(reqAndCreds.getNa1(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
+//            socket.close();
+//            SecureDatagramSocket socket = new SecureDatagramSocket(new InetSocketAddress(InetAddress.getLocalHost().getHostAddress(), ticket.getPort()));
+            socket.send(round2Packet(reqAndCreds.getNa1(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
 
             // (round 3)
             inBuffer = new byte[4 * 1024];
             inPacket = new DatagramPacket(inBuffer, inBuffer.length);
-            newSocket.receive(inPacket);
+            socket.receive(inPacket);
             PlainPBAckVerification verificationAck = processRound3(inPacket);
 
             // (round 4)
-            newSocket.send(round4Packet(verificationAck.getN3(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
+            socket.send(round4Packet(verificationAck.getN3(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
 
             ip = inPacket.getAddress().getHostAddress();
             port = inPacket.getPort();

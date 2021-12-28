@@ -103,7 +103,11 @@ class ProxyBox {
         byte[] payloads = client.getPayloads();
         byte[] sigBytes = client.getSigBytes();
 
-        ProxyHandshake handShake = new ProxyHandshake(ticket.getIp(), ticket.getPort(), strserverPort, payloads);
+        // UDP
+        SecureDatagramSocket inSocket = Utils.secureDatagramSocketWithReusableAddress(ticket.getPort(), false);
+
+
+        ProxyHandshake handShake = new ProxyHandshake(ticket.getIp(), ticket.getPort(), strserverPort, payloads, inSocket);
         handShake.start(ticket, rtssCipherTicket, sigBytes);
 
 
@@ -111,7 +115,11 @@ class ProxyBox {
         Set<SocketAddress> outSocketAddressSet = Arrays.stream(mpegplayers.split(",")).map(
                 ProxyBox::parseSocketAddress).collect(Collectors.toSet());
 
-        SecureDatagramSocket inSocket = Utils.secureDatagramSocketWithReusableAddress(ticket.getPort());
+
+
+
+
+
         DatagramSocket outSocket = new DatagramSocket();
         byte[] buffer = new byte[4 * 1024];
 

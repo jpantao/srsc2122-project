@@ -33,16 +33,14 @@ public class ProxyHandshake {
     private int initFrameMark;
 
 
-    public ProxyHandshake(String serverAddr, int clientPort, int servicePort, byte[] payloadUsedInSignature) throws IOException {
+    public ProxyHandshake(String serverAddr, int clientPort, int servicePort, byte[] payloadUsedInSignature, SecureDatagramSocket inSocket) throws IOException {
         Utils.loadBC();
         this.properties = Utils.loadConfig(CONFIG_FILE);
         String macSuite = properties.getProperty("mac-ciphersuite");
         byte[] macKeyBytes = Utils.decodeHexString(properties.getProperty("mac-keybytes"));
         this.mac = Utils.getHMAC(macSuite, macKeyBytes, macSuite);
 
-        this.socket = new DatagramSocket(null);
-        this.socket.setReuseAddress(true);
-        this.socket.bind(new InetSocketAddress(clientPort));
+        this.socket = inSocket;
 
         this.serverAddr = InetAddress.getByName(serverAddr);
         this.servicePort = servicePort;
@@ -63,16 +61,16 @@ public class ProxyHandshake {
 
             // (round 2)
             Utils.writeCryptoConf(plainTicket, CRYPTOCONF_FILE);
-            socket.close();
+//            socket.close();
             System.out.println("listen port " + plainTicket.getPort());
-            socket = Utils.secureDatagramSocketWithReusableAddress(plainTicket.getPort());
+//            socket = Utils.secureDatagramSocketWithReusableAddress(plainTicket.getPort());
             inBuffer = new byte[4 * 1024];
             inPacket = new DatagramPacket(inBuffer, inBuffer.length);
             socket.receive(inPacket);
             PlainRTSSVerification verification = processRound2(inPacket);
 
             // (round 3)
-            socket.send(round3Packet(verification.getNa2(), inPacket.getAddress().getHostAddress(), inPacket.getPort()));
+            socket.send(round3Packet(verification.getNa2(), inPacket.getAddress().getHostAddress(), servicePort));
 
 
             // (round 4)

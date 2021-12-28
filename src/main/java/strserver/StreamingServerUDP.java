@@ -31,7 +31,9 @@ class StreamingServerUDP {
         Properties properties = Utils.loadConfig(CONFIG_FILE);
         int servicePort = Integer.parseInt(properties.getProperty("port"));
 
-        StreamingServerHandshake handShake = new StreamingServerHandshake(KEYSTORE_FILE, KEYSTORE_PASS, servicePort);
+        SecureDatagramSocket s = Utils.secureDatagramSocketWithReusableAddress(servicePort, true);
+
+        StreamingServerHandshake handShake = new StreamingServerHandshake(KEYSTORE_FILE, KEYSTORE_PASS, servicePort, s);
         handShake.go();
 
         int size;
@@ -40,7 +42,6 @@ class StreamingServerUDP {
         DataInputStream g = new DataInputStream(new FileInputStream(MOVIES_DIR + "/" + handShake.getMovieID() + ".dat"));
         byte[] buff = new byte[4096];
 
-        SecureDatagramSocket s = new SecureDatagramSocket();
         InetSocketAddress addr = new InetSocketAddress(handShake.getIp(), handShake.getPort());
         DatagramPacket p = new DatagramPacket(buff, buff.length, addr);
         long t0 = System.nanoTime(); // tempo de referencia para este processo
