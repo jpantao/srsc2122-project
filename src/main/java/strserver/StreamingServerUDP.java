@@ -6,6 +6,7 @@ package strserver;
  * for clients to play in real time the transmitted movies
  */
 
+import common.DTLSSocket;
 import common.SecureDatagramSocket;
 import common.Utils;
 
@@ -28,10 +29,12 @@ class StreamingServerUDP {
 //            System.exit(-1);
 //        }
 
+        Properties tlsConfigs = Utils.loadConfig("config/streamingserver_dtls.properties");
         Properties properties = Utils.loadConfig(CONFIG_FILE);
         int servicePort = Integer.parseInt(properties.getProperty("port"));
 
-        SecureDatagramSocket s = Utils.secureDatagramSocketWithReusableAddress(servicePort, true);
+        SecureDatagramSocket s = Utils.secureDatagramSocketWithReusableAddress(tlsConfigs, servicePort, true);
+        ((DTLSSocket) s).beginHandshake(new InetSocketAddress(10000));
 
         StreamingServerHandshake handShake = new StreamingServerHandshake(KEYSTORE_FILE, KEYSTORE_PASS, servicePort, s);
         handShake.go();

@@ -126,8 +126,10 @@ public class ServerSAPKDP {
                 throw new Exception("Voucher value is insufficient");
 
 
-            int clientPort = ThreadLocalRandom.current().nextInt(10000, 19999);
-            int serverPort = ThreadLocalRandom.current().nextInt(20000, 29999);
+            int clientPort = 10000;
+//            int clientPort = ThreadLocalRandom.current().nextInt(10000, 19999);
+            int serverPort = 20000;
+//            int serverPort = ThreadLocalRandom.current().nextInt(20000, 29999);
             PlainTicketCreds clientTicket = genTC(auth.getMovieID(), properties.getProperty("strserverIP"), clientPort, payment.getN4() + 1);
             PlainTicketCreds rtssTicket = genTC(auth.getMovieID(), sock.getInetAddress().getHostAddress(), serverPort, payment.getN4() + 1);
             byte[] clientCipherTicket = Utils.encryptTicket(clientTicket, properties.getProperty("asym-ciphersuite"), keyring.get(PROXYBOX_ALIAS));

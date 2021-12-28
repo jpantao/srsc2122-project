@@ -15,7 +15,7 @@ import java.security.*;
 
 import static javax.net.ssl.SSLEngineResult.HandshakeStatus.FINISHED;
 import static javax.net.ssl.SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus.*;
+
 
 
 public class DTLSSocket extends DatagramSocket {
@@ -28,18 +28,18 @@ public class DTLSSocket extends DatagramSocket {
     private static final String SERVER = "STREAMING ONLY"; //server side
     private static final String SSL_CONTEXT = "DTLS";
 
-    public DTLSSocket(Properties certificatesConfig, Properties dtlsConfig, boolean is_server, SocketAddress address) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
+    public DTLSSocket(Properties config,  boolean is_server, SocketAddress address) throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
         super(address); // address for the socket
 
 	// for the following configs, take a look on exemplified
 	// dtls congif files ... Possibly you have other intersting
 	// config support - jsin, xml or whatever ... would be great ;-)
-        String protocol = dtlsConfig.getProperty("TLS-PROT-ENF");
-        this.engine = createSSLContext(certificatesConfig).createSSLEngine();
+        String protocol = config.getProperty("tlsversion");
+        this.engine = createSSLContext(config).createSSLEngine();
         if (is_server) //server endpoint
-            setServerAuth(dtlsConfig.getProperty("TLS-AUTH"));
+            setServerAuth(config.getProperty("authentication"));
         else // client endpoint
-            setProxyAuth(dtlsConfig.getProperty("TLS-AUTH"));
+            setProxyAuth(config.getProperty("authentication"));
 
 	// and for both ... In this way I have a common way to
 	// have common enabled ciphersuites for sure ...
@@ -47,7 +47,7 @@ public class DTLSSocket extends DatagramSocket {
         // but dont forget ... ou must have something in common
 	// The same for protocol versions you want to enable
 	
-        engine.setEnabledCipherSuites(dtlsConfig.getProperty("CIPHERSUITES").split(","));
+        engine.setEnabledCipherSuites(config.getProperty("CIPHERSUITES").split(","));
         engine.setEnabledProtocols(new String[]{protocol});
     }
 
@@ -173,26 +173,26 @@ public class DTLSSocket extends DatagramSocket {
     }
 
     // Begin the TLS hanshake
-//    public void beginHandshake(SocketAddress address) throws IOException {
-//        engine.beginHandshake();
-//        SSLEngineResult.HandshakeStatus status = engine.getHandshakeStatus();
-//        while (status != NOT_HANDSHAKING && status != FINISHED) {
-//            switch (status) {
-//                case NEED_TASK:
-//                    status = runTasks();
-//                    break;
-//                case NEED_WRAP:
-//                    status = wrap(address);
-//                    break;
-//                case NEED_UNWRAP:
-//                    status = unwrap();
-//                    break;
-//                case NEED_UNWRAP_AGAIN:
-//                    status = unwrapAgain();
-//                    break;
-//            }
-//        }
-//    }
+    public void beginHandshake(SocketAddress address) throws IOException {
+        engine.beginHandshake();
+        SSLEngineResult.HandshakeStatus status = engine.getHandshakeStatus();
+        while (status != NOT_HANDSHAKING && status != FINISHED) {
+            switch (status) {
+                case NEED_UNWRAP_AGAIN:
+                    status = unwrapAgain();
+                    break;
+                case NEED_TASK:
+                    status = runTasks();
+                    break;
+                case NEED_WRAP:
+                    status = wrap(address);
+                    break;
+                case NEED_UNWRAP:
+                    status = unwrap();
+                    break;
+            }
+        }
+    }
 
     // Now is up to you ... and your previous protocols you have for
     // tunneling the packets on top of your DTLS/UDP Sockets

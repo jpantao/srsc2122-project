@@ -17,6 +17,7 @@ package proxybox;
  *       Both configurable in the file config.properties
  */
 
+import common.DTLSSocket;
 import common.SecureDatagramSocket;
 import common.Utils;
 import sapkdp.ClientSAPKDP;
@@ -88,6 +89,8 @@ class ProxyBox {
     public static void main(String[] args) throws Exception {
         argparse(args);
 
+
+        Properties configs = Utils.loadConfig("config/proxybox_dtls.properties");
         Properties properties = Utils.loadConfig(proxyinfo);
         String mpegplayers = properties.getProperty("mpegplayers");
         String sigserver = properties.getProperty("sigserverAddr");
@@ -104,7 +107,8 @@ class ProxyBox {
         byte[] sigBytes = client.getSigBytes();
 
         // UDP
-        SecureDatagramSocket inSocket = Utils.secureDatagramSocketWithReusableAddress(ticket.getPort(), false);
+        SecureDatagramSocket inSocket = Utils.secureDatagramSocketWithReusableAddress(configs, 10000, false);
+        inSocket.beginHandshake(new InetSocketAddress(strserverPort));
 
 
         ProxyHandshake handShake = new ProxyHandshake(ticket.getIp(), ticket.getPort(), strserverPort, payloads, inSocket);

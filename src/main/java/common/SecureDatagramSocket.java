@@ -5,16 +5,15 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.security.*;
-import java.util.Arrays;
+import java.security.cert.CertificateException;
 import java.util.Properties;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 
-public class SecureDatagramSocket extends DatagramSocket {
+public class SecureDatagramSocket extends DTLSSocket {
     String options;
     private static final SecureRandom random = new SecureRandom();
     public static final int HEADER_SIZE = 5;
@@ -30,8 +29,8 @@ public class SecureDatagramSocket extends DatagramSocket {
 
 
 
-    public SecureDatagramSocket(SocketAddress inSocketAddress, Boolean is_server) throws SocketException {
-        super(inSocketAddress);
+    public SecureDatagramSocket(Properties configs, SocketAddress inSocketAddress, Boolean is_server) throws IOException, UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+        super(configs, is_server, inSocketAddress);
         if (is_server)
             init(Cipher.ENCRYPT_MODE);
         else

@@ -455,8 +455,8 @@ public class Utils
         return c.doFinal(PlainMsgSAPKDP.serialize(ticket));
     }
 
-    public static SecureDatagramSocket secureDatagramSocketWithReusableAddress(int port, boolean is_server) throws IOException, InterruptedException {
-        SecureDatagramSocket newSocket = new SecureDatagramSocket(null, is_server);
+    public static SecureDatagramSocket secureDatagramSocketWithReusableAddress(Properties configs, int port, boolean is_server) throws IOException, InterruptedException, UnrecoverableKeyException, CertificateException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+        SecureDatagramSocket newSocket = new SecureDatagramSocket(configs, null, is_server);
         newSocket.setReuseAddress(true);
         newSocket.bind(new InetSocketAddress(port));
         return newSocket;
