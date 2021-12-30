@@ -21,15 +21,18 @@
 
 ### Additional Notes
 
+**From PA#1:**
 - Registered users' database can be found in [users.json](resources/users.json) ;
 - Available movies' database can be found in [movies.json](resources/movies.json);
 - Configuration files are under the [config](config) directory;
 - Keystore files are under the [keystores](keystores) directory;
 - Movie files are under the [movies](movies) directory;
 
-[comment]: <> (- Ciphersuites tested:)
+[//]: # (**From PA#2:**)
 
-[comment]: <> (    - AES/CTR/NoPadding HmacSHA512.)
+[//]: # (- We have tested the suported TLS versions and ciphersuites found in [ciphersuites_tls.csv]&#40;config/ciphersuites_tls.csv&#41; )
+
+[//]: # (by running `python3 scripts/test-tls-cs.py` and the results can be found in [tls_test.log]&#40;log/tls_test.log&#41;.)
 
 ---
 
@@ -51,10 +54,10 @@ Default port is 8888. Any changes should also be reflected in the [proxybox.prop
 file.
 
 ```bash
-java -cp target/srsc-project.jar sigserver.SignalingServer <port>
+java -cp target/srsc-project-PA2.jar sigserver.SignalingServer <port>
 
 # Example:
-java -cp target/srsc-project.jar sigserver.SignalingServer
+java -cp target/srsc-project-PA2.jar sigserver.SignalingServer
 ```
 
 ### StreamingServer
@@ -63,10 +66,10 @@ Default port is 9999. Any changes should also be reflected in the [proxybox.prop
 file.
 
 ```bash
-java -cp target/srsc-project-PA1.jar strserver.StreamingServerUDP <port>
+java -cp target/srsc-project-PA2.jar strserver.StreamingServerUDP <port>
 
 # Example:
-java -cp target/srsc-project-PA1.jar strserver.StreamingServerUDP 
+java -cp target/srsc-project-PA2.jar strserver.StreamingServerUDP 
 ```
 
 ### ProxyBox
@@ -76,31 +79,35 @@ srsc2021**. The multicast address for the mpegplayers can be set in
 the [proxybox.properties](config/proxybox.properties) file.
 
 ```bash
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
+java -cp target/srsc-project-PA2.jar proxybox.ProxyBox -user <username> -password <pwd> -keystore <keystore-file> -proxyinfo <proxyinfo-file> -movie <movieID> -storepass <keystore-password>
 
 # Example:
-java -cp target/srsc-project-PA1.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e45931ef.voucher
+java -cp target/srsc-project-PA2.jar proxybox.ProxyBox -user jpantao -password password -keystore keystores/proxybox.keystore -proxyinfo config/proxybox.properties -movie cars -voucher resources/coin_3040021e45931ef.voucher
 ```
 
 ### Generate voucher
 
 ```bash
-java -cp target/srsc-project-PA1.jar extra.VoucherMinter
+java -cp target/srsc-project-PA2.jar extra.VoucherMinter
 ```
 
-### With the run-pa1.sh script
+### With the run-pa2.sh script
 
 Run the three components with the default configs:
 
 ```bash
 # Available movieID's: cars, and monsters.
-./scripts/run-pa1.sh <movieID> <voucherFile>
+
+./scripts/run-pa2.sh <movieID> <voucherFile>
 
 #Example
-./scripts/run-pa1.sh cars resources/coin_3040021e45931ef.voucher
+./scripts/run-pa2.sh cars resources/coin_3040021e45931ef.voucher
+
 ```
 
+
 A [log](log) directory will be created by the script with the stdout of the 3 components.
+
 
 
 

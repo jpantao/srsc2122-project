@@ -108,11 +108,11 @@ public class VoucherMinter {
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF1_ALGO), Utils.decodeHexString(proof1)))
             return -1;
-        LOGGER.info(SHA_256_OK);
+//        LOGGER.info(SHA_256_OK);
 
         if (!MessageDigest.isEqual(hash(toVerify.toByteArray(), PROOF2_ALGO), Utils.decodeHexString(proof2)))
             return -1;
-        LOGGER.info(RIPEMD_OK);
+//        LOGGER.info(RIPEMD_OK);
 
 
         toVerify = new ByteArrayOutputStream();
@@ -145,7 +145,7 @@ public class VoucherMinter {
     }
 
     private static boolean checkSignature(String coinPublicKey, String coinAuthenticity, ByteArrayOutputStream toVerify) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeySpecException, InvalidKeyException, SignatureException {
-        LOGGER.info("Checking hash:" + coinAuthenticity + " with key: " + coinPublicKey);
+//        LOGGER.info("Checking hash:" + coinAuthenticity + " with key: " + coinPublicKey);
         Signature ecdsaVerify;
         byte[] byteKey;
         X509EncodedKeySpec X509publicKey;
@@ -218,7 +218,7 @@ public class VoucherMinter {
     }
 
     private static byte[] hash(byte[] input, String algo) throws NoSuchAlgorithmException {
-        LOGGER.info("Hashing with: " + algo);
+//        LOGGER.info("Hashing with: " + algo);
         MessageDigest hash = null;
         try {
             hash = MessageDigest.getInstance(algo, PROVIDER);
@@ -235,7 +235,7 @@ public class VoucherMinter {
     }
 
     private static byte[] sign(PrivateKey key, ByteArrayOutputStream baos) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        LOGGER.info("Signing with key: " + key);
+//        LOGGER.info("Signing with key: " + key);
         Signature signature = null;
         try {
             signature = Signature.getInstance(SHA_512_WITH_ECDSA, PROVIDER);
@@ -251,7 +251,7 @@ public class VoucherMinter {
     }
 
     private static KeyPair generateVoucherKeys() throws NoSuchAlgorithmException {
-        LOGGER.info(GENERATING_COIN_S_PRIVATE_KEY);
+//        LOGGER.info(GENERATING_COIN_S_PRIVATE_KEY);
         KeyPairGenerator kpg = null;
         try {
             kpg = KeyPairGenerator.getInstance(EC, PROVIDER);

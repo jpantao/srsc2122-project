@@ -72,16 +72,15 @@ public class SignalingServer {
         ksTrust.load(new FileInputStream(tsName), ksPass);
         kmf.init(ksKeys, ctPass);
         tmf.init(ksTrust);
-        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-
-
-
+        SecureRandom r = new SecureRandom();
+        sc.init(kmf.getKeyManagers(), tmf.getTrustManagers(), r);
 
 
         SSLServerSocketFactory ssf = sc.getServerSocketFactory();
 
         try (SSLServerSocket s = (SSLServerSocket) ssf.createServerSocket(port)) {
+            s.setEnabledProtocols(new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"});
+
             // server is listening on port 1234
             switch (tlsProperties.getProperty("authentication")) {
                 case "MUTUAL":
@@ -108,8 +107,10 @@ public class SignalingServer {
                 System.out.println("New client connected: " + client.getInetAddress().getHostAddress());
 
                 // launch handler
-                new Thread(() -> serverSAPKDP.handleHandshake(client)).start();
+//                new Thread(() -> serverSAPKDP.handleHandshake(client)).start();
 //                break; // only handle 1 for now
+                serverSAPKDP.handleHandshake(client);
+                break;
             }
         } catch (IOException e) {
             e.printStackTrace();
