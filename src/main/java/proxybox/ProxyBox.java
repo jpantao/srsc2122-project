@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 class ProxyBox {
 
+
     public static final String DEFAULT_MOVIE = "monsters";
     public static final char[] KEYSTORE_PASS = "srsc2122".toCharArray();
 
@@ -45,6 +46,8 @@ class ProxyBox {
     private static String proxyinfo;
     private static String movieID;
     private static String voucherFile;
+
+    private static boolean sapkdpOnly = false;
 
     private static void argparse(String[] args) {
         for (int i = 0; i < args.length; i++)
@@ -75,6 +78,9 @@ class ProxyBox {
                 case "-voucher":
                     voucherFile = args[++i];
                     break;
+                case "-sapkdp_only":
+                    sapkdpOnly = true;
+                    break;
                 default:
                     System.err.println("Unknown option");
             }
@@ -97,6 +103,9 @@ class ProxyBox {
         // SAPKDP
         ClientSAPKDP client = new ClientSAPKDP(proxyBoxID, username, keystore, storepass, password, sigserver);
         client.handshake(movieID, voucherFile);
+
+        if (sapkdpOnly)
+            System.exit(0);
 
         PlainTicketCreds ticket = client.getClientTicket();
         byte[] rtssCipherTicket = client.getRtssCipherTicket();

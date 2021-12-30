@@ -119,6 +119,7 @@ public class ClientSAPKDP {
 
 
         try (SSLSocket sock = (SSLSocket) f.createSocket(addr[0], Integer.parseInt(addr[1]))) {
+            sock.setEnabledProtocols(new String[] {"TLSv1", "TLSv1.1", "TLSv1.2"});
             switch (tlsProperties.getProperty("authentication")) {
                 case "MUTUAL":
                     break;

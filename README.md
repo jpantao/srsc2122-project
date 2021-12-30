@@ -21,15 +21,18 @@
 
 ### Additional Notes
 
+**From PA#1:**
 - Registered users' database can be found in [users.json](resources/users.json) ;
 - Available movies' database can be found in [movies.json](resources/movies.json);
 - Configuration files are under the [config](config) directory;
 - Keystore files are under the [keystores](keystores) directory;
 - Movie files are under the [movies](movies) directory;
 
-[comment]: <> (- Ciphersuites tested:)
+[//]: # (**From PA#2:**)
 
-[comment]: <> (    - AES/CTR/NoPadding HmacSHA512.)
+[//]: # (- We have tested the suported TLS versions and ciphersuites found in [ciphersuites_tls.csv]&#40;config/ciphersuites_tls.csv&#41; )
+
+[//]: # (by running `python3 scripts/test-tls-cs.py` and the results can be found in [tls_test.log]&#40;log/tls_test.log&#41;.)
 
 ---
 
@@ -88,30 +91,25 @@ java -cp target/srsc-project-PA2.jar proxybox.ProxyBox -user jpantao -password p
 java -cp target/srsc-project-PA2.jar extra.VoucherMinter
 ```
 
-[//]: # (### With the run-pa2.sh script)
+### With the run-pa2.sh script
 
-[//]: # ()
-[//]: # (Run the three components with the default configs:)
+Run the three components with the default configs:
 
-[//]: # ()
-[//]: # (```bash)
+```bash
+# Available movieID's: cars, and monsters.
 
-[//]: # (# Available movieID's: cars, and monsters.)
+./scripts/run-pa2.sh <movieID> <voucherFile>
 
-[//]: # (./scripts/run-pa2.sh <movieID> <voucherFile>)
+#Example
+./scripts/run-pa2.sh cars resources/coin_3040021e45931ef.voucher
 
-[//]: # ()
-[//]: # (#Example)
+```
 
-[//]: # (./scripts/run-pa2.sh cars resources/coin_3040021e45931ef.voucher)
 
-[//]: # (```)
+A [log](log) directory will be created by the script with the stdout of the 3 components.
 
-[//]: # ()
-[//]: # (A [log]&#40;log&#41; directory will be created by the script with the stdout of the 3 components.)
 
-[//]: # ()
-[//]: # ()
-[//]: # ()
-[//]: # ()
+
+
+
 
